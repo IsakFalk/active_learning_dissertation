@@ -1,0 +1,11 @@
+\babel@toc {english}{}
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {2.1}{\ignorespaces Upper bound on convergence rates using Frank Wolfe\relax }}{31}{table.caption.7}% 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {6.1}{\ignorespaces Table for Agnostic Regression containing dataset information and hyperparameters. First column is the name of the dataset, \(n\) is the size, \(d\) the number of dimensions, \(\lambda _{opt}\) and \(\sigma _{opt}\) the hyperparameters chosen for KRR using kCV\relax }}{57}{table.caption.15}% 
+\contentsline {table}{\numberline {6.2}{\ignorespaces Table for Realisable Regression containing dataset information and hyperparameters. First column is the name of the dataset, \(n\) is the size, \(d\) the number of dimensions, \(\lambda _{opt}\) and \(\sigma _{opt}\) the hyperparameters chosen for KRR using kCV\relax }}{57}{table.caption.16}% 
+\contentsline {table}{\numberline {6.3}{\ignorespaces Table for Agnostic Classification containing dataset information and hyperparameters. First column is the name of the dataset, \(n\) is the size, \(d\) the number of dimensions, \(\lambda _{opt}\) and \(\sigma _{opt}\) the hyperparameters chosen for KRR using kCV\relax }}{57}{table.caption.17}% 

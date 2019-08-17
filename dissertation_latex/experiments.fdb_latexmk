@@ -1,0 +1,12 @@
+# Fdb version 3
+["pdflatex"] 1565886241 "experiments.tex" "experiments.pdf" "experiments" 1565886241
+  "/usr/share/texmf-dist/fonts/map/fontname/texfonts.map" 1557554374 3332 103109f5612ad95229751940c61aada0 ""
+  "/usr/share/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm" 1557554374 1328 c834bbb027764024c09d3d2bf908b5f0 ""
+  "/usr/share/texmf-dist/fonts/tfm/public/cm/cmti10.tfm" 1557554374 1480 aa8e34af0eb6a2941b776984cf1dfdc4 ""
+  "/usr/share/texmf-dist/web2c/texmf.cnf" 1557554374 33301 a3134070eacafb10b1f371612ce2650d ""
+  "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1563042356 7979416 c6b5efad52343168994887b45f30c6d1 ""
+  "experiments.aux" 1565886102 6245 ee9969650bbe28805aa3ab92508a2341 ""
+  "experiments.tex" 1565886234 8611 b2d7decc323c69323defca20329434a4 ""
+  (generated)
+  "experiments.pdf"
+  "experiments.log"

@@ -1,0 +1,273 @@
+\chapter{Appendix}
+
+\section{Proofs}
+\label{sec:appendix-proofs}
+% \printproofs
+
+\section{Convex Analysis}
+We introduce the necessary concepts from convex analysis used in the analysis of
+convergence of KH and FW. We will follow \cite{boyd04_convex}.
+
+\begin{definition}
+  \label{def:conv-hull}
+  The Convex Hull of a set \(\mathcal{C}\) is denoted by \(\convhull(C)\) and is defined as
+  \begin{equation}
+    \label{eq:conv-hull}
+    \convhull(\mathcal{C}) = \{ \sum_{i \in I}^n \theta_{i} x_i | \theta_i \geq 0, \forall i \in I, \sum_{i \in I} \theta_i = 1 \}
+  \end{equation}
+  where \(I\) is an index set of elements in \(\mathcal{C}\).
+\end{definition}
+
+\begin{definition}
+  \label{def:aff-hull}
+  The Affine Hull of a set \(\mathcal{C}\) is denoted by \(\affhull(C)\) and is defined as
+  \begin{equation}
+    \label{eq:aff-hull}
+    \affhull(\mathcal{C}) = \{ \sum_{i \in I}^n \theta_{i} x_i | \theta_i \in \R, \forall i \in I, \sum_{i \in I} \theta_i = 1 \}
+  \end{equation}
+  where \(I\) is an index set of elements in \(\mathcal{C}\).
+\end{definition}
+
+\begin{definition}
+  \label{def:relative-interior}
+  The Relative Interior of a set \(\mathcal{C}\) is denoted by \(\relint(C)\) and is defined as
+  \begin{equation}
+    \label{eq:relative-interior}
+    \relint(\mathcal{C}) = \{x \in \mathcal{C} | B_{r}(x) \cup \affhull(\mathcal{C}) \subseteq \mathcal{C}, \text{ for some } r \geq 0\}
+  \end{equation}
+\end{definition}
+
+\begin{definition}
+  \label{def:relative-boundary}
+  The Relative boundary of a set \(\mathcal{C}\) is denoted by \(\relbound \mathcal{C}\) and is defined as
+  \begin{equation}
+    \label{eq:relative-boundary}
+    \relbound \mathcal{C} = \clos(\mathcal{C}) \setminus \relint(\mathcal{C})
+  \end{equation}
+  where \(\clos(\mathcal{C})\) is the closure of \(\mathcal{C}\).
+\end{definition}
+
+\section{Experiments}
+\subsection{Procedures}
+\FloatBarrier
+
+\begin{algorithm}[htb]
+  \label{alg:experiment-agnostic}
+  \caption{Experimental procedure (Agnostic)}
+  \begin{algorithmic}[1]
+    \Procedure{Experiment}{$D$, $\algo$, $\querstrat$, $\ell$, $k_{cv}$,
+      $k_{\ell}$, $n_{sub}$, $n_{val}$} \Comment{\(D\) is the dataset, \(\algo\)
+      is the algorithm, \(\querstrat\) is the querying strategy, \(k_{cv}\) is
+      the number of folds in \(kCV\), \(k_{l}\) is the number of folds over
+      \(D_{train+test}\) that we run to get \(k_{l}\) learning curves,
+      \(n_{sub}\) is threshold for subsampling and \(n_{val}\) is the size of the
+      validation split.}
+    \State $\mat{L} \gets \mat{0}_{k, n}$ \Comment{\(k_l\) by \(n\) empty matrix for losses for timesteps \(t=1:n\) for folds \(i=1:k_l\)}
+    \State $n_{D} \gets |D|$
+    \If {$n_{D} > n_{sub}$} \Comment{If dataset too big, subsample}
+    \State $D \gets \textrm{subsample}(D, n_{sub})$
+    \State $n_{D} \gets |D|$
+    \EndIf
+    \State $S_{val} \gets D_{1:n_{val}}$
+    \State $\sigma_{opt}, \lambda_{opt} \gets kCV(S_{val}, \algo, k_{cv})$ \Comment{Get optimal hyperparameters through k-fold CV}
+    \State $S_{train+test} \gets S_{n_{val}+1:n}$
+    \State $\sigma'_{opt} \gets \frac{\sigma_{opt}}{\sqrt{2}}$ \Comment{Set \(\sigma_{opt}'\) according to \ref{cor:gauss-kernel-squared-gives-eta-zero}}
+    \State $[S_{1}, S_{2}, \dots, S_{k}] \gets S_{train+test}$ \Comment{Split train / test data in k folds}
+    \For {$i = 1:k_{l}$} \Comment{Get learning curve for fold \(i\)}
+    \State $\trainset_{test} \gets S_{i}$
+    \State $\poolset_{0} \gets S_{train+test} \setminus \trainset_{test}$
+    \State $n \gets |\poolset_{0}|$
+    \For {$t = 1:n$} \Comment{Run active learning algorithm}
+    \State $x_{t}^{q} \gets \querstrat(\poolsetx_{t-1})$
+    \State $y_{t}^{q} \gets \oracle(x_{t}^{q})$
+    \State $\trainset_{t} \gets \trainset_{t-1} \cup \{(x_{t}^{q}, y_{t}^{q})\}$
+    \State $\poolset_{t} \gets \poolset_{t-1} \setminus \{(x_{t}^{q}, y_{t}^{q})\}$
+    \State $\hat{h}_{t} \gets \algo(\trainset_{t})$
+    \State $\mat{L}_{i, t} \gets \err{S_{test}}{\hat{h}_{t}}$ \Comment{Fill out loss matrix for current fold and step}
+    \EndFor
+    \EndFor
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[htb]
+  \label{alg:experiment-realisable}
+  \caption{Experimental procedure (Realisable)}
+  \begin{algorithmic}[1]
+    \Procedure{Experiment}{$D$, $\algo$, $\querstrat$, $\ell$, $k_{cv}$,
+      $k_{\ell}$, $n_{sub}$, $n_{val}$} \Comment{\(D\) is the dataset, \(\algo\)
+      is the algorithm, \(\querstrat\) is the querying strategy, \(k_{cv}\) is
+      the number of folds in \(kCV\), \(k_{l}\) is the number of folds over
+      \(D_{train+test}\) that we run to get \(k_{l}\) learning curves,
+      \(n_{sub}\) is threshold for subsampling and \(n_{val}\) is the size of the
+      validation split.}
+    \State $\mat{L} \gets \mat{0}_{k, n}$ \Comment{\(k_l\) by \(n\) empty matrix for losses for timesteps \(t=1:n\) for folds \(i=1:k_l\)}
+    \State $n_{D} \gets |D|$
+    \If {$n_{D} > n_{sub}$} \Comment{If dataset too big, subsample}
+    \State $D \gets \textrm{subsample}(D, n_{sub})$
+    \State $n_{D} \gets |D|$
+    \EndIf
+    \State $\sigma_{opt}, \lambda_{opt} \gets kCV(D, \algo, k_{cv})$ \Comment{Get optimal hyperparameters through k-fold CV}
+    \State $h_{realisable} = \algo(D)$ \Comment{Fit new hypothesis and create
+      new labels}
+    \State $D \gets \{(x_i, h_{realisable}(x_i)\}_{i=1}^{n}$
+    \State $S_{val} \gets D_{1:n_{val}}$
+    \State $S_{train+test} \gets S_{n_{val}+1:n}$
+    \State $\sigma'_{opt} \gets \frac{\sigma_{opt}}{\sqrt{2}}$ \Comment{Set \(\sigma_{opt}'\) according to \ref{cor:gauss-kernel-squared-gives-eta-zero}}
+    \State $[S_{1}, S_{2}, \dots, S_{k}] \gets S_{train+test}$ \Comment{Split train / test data in k folds}
+    \For {$i = 1:k_{l}$} \Comment{Get learning curve for fold \(i\)}
+    \State $\trainset_{test} \gets S_{i}$
+    \State $\poolset_{0} \gets S_{train+test} \setminus \trainset_{test}$
+    \State $n \gets |\poolset_{0}|$
+    \For {$t = 1:n$} \Comment{Run active learning algorithm}
+    \State $x_{t}^{q} \gets \querstrat(\poolsetx_{t-1})$
+    \State $y_{t}^{q} \gets \oracle(x_{t}^{q})$
+    \State $\trainset_{t} \gets \trainset_{t-1} \cup \{(x_{t}^{q}, y_{t}^{q})\}$
+    \State $\poolset_{t} \gets \poolset_{t-1} \setminus \{(x_{t}^{q}, y_{t}^{q})\}$
+    \State $\hat{h}_{t} \gets \algo(\trainset_{t})$
+    \State $\mat{L}_{i, t} \gets \err{S_{test}}{\hat{h}_{t}}$ \Comment{Fill out loss matrix for current fold and step}
+    \EndFor
+    \EndFor
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\FloatBarrier
+
+\subsection{Plots}
+\begin{figure}[htb]
+  \label{figs:agnostic-regression-learning-curves}
+  \centering
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-agnostic-bike-sharing}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-bike_sharing_day.png}
+    \caption{bike sharing (day)}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-agnostic-boston}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-boston.png}
+    \caption{boston}
+  \end{subfigure}
+  \hspace{1.0cm}
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-agnostic-concrete}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-concrete.png}
+    \caption{concrete}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-agnostic-red_whine}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-red_wine.png}
+    \caption{red wine}
+  \end{subfigure}
+  \hspace{1.0cm}
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-agnostic-white_wine}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-white_wine.png}
+    \caption{white wine}
+  \end{subfigure}
+  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\) standard deviation over the 5 folds) for agnostic regression comparing FW (KH) with MC and
+    Levscore. The \(y\)-axis is MSE (Mean Squared Error), \(x\)-axis is \(t\)
+    (number of datapoints in current active learning train set). A good
+    algorithm will have a trajectory that goes down quickly with \(t\). MC is baseline.}
+\end{figure}
+
+\begin{figure}[htb]
+  \label{figs:realisable-regression-learning-curves}
+  \centering
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-realisable-bike-sharing}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold_realisable-bike_sharing_day.png}
+    \caption{bike sharing (day)}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-realisable-boston}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold_realisable-boston.png}
+    \caption{boston}
+  \end{subfigure}
+  \hspace{1.0cm}
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-realisable-concrete}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold_realisable-concrete.png}
+    \caption{concrete}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-realisable-red_whine}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold_realisable-red_wine.png}
+    \caption{red wine}
+  \end{subfigure}
+  \hspace{1.0cm}
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-realisable-white_wine}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold_realisable-white_wine.png}
+    \caption{white wine}
+  \end{subfigure}
+  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\) standard deviation over the 5 folds) for regression comparing FW (KH) with MC and
+    Levscore. The \(y\)-axis is MSE (Mean Squared Error), \(x\)-axis is \(t\)
+    (number of datapoints in current active learning train set). A good
+    algorithm will have a trajectory that goes down quickly with \(t\). MC is baseline.}
+\end{figure}
+
+\begin{figure}[htb]
+  \label{figs:agnostic-classification-learning-curves}
+  \centering
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-agnostic-mnist}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-mnist.png}
+    \caption{mnist}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.48\textwidth}
+    \label{fig:learning-curve-agnostic-yeast}
+    \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-yeast.png}
+    \caption{yeast}
+  \end{subfigure}
+  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\) standard deviation over the 5 folds) for agnostic classification comparing FW (KH) with MC and
+    Levscore. The \(y\)-axis is Accuracy, \(x\)-axis is \(t\)
+    (number of datapoints in current active learning train set). A good
+    algorithm will have a trajectory that goes up quickly with \(t\). MC is baseline.}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Datasets and Hyperparameters}
+
+\begin{table}[H]
+  \centering
+  \csvautobooktabular[
+  table head=\toprule Dataset & $n$ & $d$ & $\lambda_{opt}$ & $\sigma_{opt}$ \\\midrule
+  ]{../active_learning_code/reports/hyperparams/agnostic_regression_hyperparams.csv}
+  \vspace{0.5cm}
+  \caption{Table for Agnostic Regression containing dataset information and hyperparameters.
+    First column is the name of the dataset, \(n\) is the size, \(d\) the number of
+    dimensions, \(\lambda_{opt}\) and \(\sigma_{opt}\) the hyperparameters chosen
+    for KRR using kCV}
+\end{table}
+
+\vspace{2cm}
+\FloatBarrier
+
+\begin{table}[H]
+  \centering
+  \csvautobooktabular[
+  table head=\toprule Dataset & $n$ & $d$ & $\lambda_{opt}$ & $\sigma_{opt}$ \\\midrule
+  ]{../active_learning_code/reports/hyperparams/realisable_regression_hyperparams.csv}
+  \vspace{0.5cm}
+  \caption{Table for Realisable Regression containing dataset information and hyperparameters.
+    First column is the name of the dataset, \(n\) is the size, \(d\) the number of
+    dimensions, \(\lambda_{opt}\) and \(\sigma_{opt}\) the hyperparameters chosen
+    for KRR using kCV}
+\end{table}
+
+\vspace{2cm}
+\FloatBarrier
+
+\begin{table}[H]
+  \centering
+  \csvautobooktabular[
+  table head=\toprule Dataset & $n$ & $d$ & $\lambda_{opt}$ & $\sigma_{opt}$ \\\midrule
+  ]{../active_learning_code/reports/hyperparams/agnostic_classification_hyperparams.csv}
+  \vspace{0.5cm}
+  \caption{Table for Agnostic Classification containing dataset information and hyperparameters.
+    First column is the name of the dataset, \(n\) is the size, \(d\) the number of
+    dimensions, \(\lambda_{opt}\) and \(\sigma_{opt}\) the hyperparameters chosen
+    for KRR using kCV}
+\end{table}

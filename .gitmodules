@@ -1,0 +1,6 @@
+[submodule "ucl-latex-thesis-templates"]
+	path = ucl-latex-thesis-templates
+	url = https://github.com/IsakFalk/ucl-latex-thesis-templates
+[submodule "active_learning_code"]
+	path = active_learning_code
+	url = https://github.com/IsakFalk/active_learning_code

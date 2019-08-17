@@ -1,0 +1,250 @@
+\documentclass[11pt,mres,a4paper,oneside,draft]{ucl_thesis}
+
+%%%%%%%%%%%%%
+% Packages  %
+%%%%%%%%%%%%%
+\usepackage{etex}
+\usepackage{placeins}
+
+% Load my own package as well
+\usepackage{isak}
+
+% Load to get outlines right
+\usepackage{bookmark}
+
+% allows us to load csv files directly
+\usepackage{csvsimple}
+
+% This package means empty pages (pages with no text) won't get stuff
+%  like chapter names at the top of the page. It's mostly cosmetic.
+\usepackage{emptypage}
+
+% The float package improves LaTeX's handling of floats,
+%  and also adds the option to *forcbe* LaTeX to put the float
+%  HERE, with the [H] option to the float environment.
+
+%  Use these two packages together --
+% they define symbols
+%  for e.g. units that you can use in both text and math mode.
+\usepackage{gensymb}
+
+\usepackage{textcomp}
+
+% The setspace package lets you use 1.5-sized or double line spacing.
+\usepackage{setspace}
+\setstretch{1.5}
+
+% That just does body text -- if you want to expand *everything*,
+%  including footnotes and tables, use this instead:
+%\renewcommand{\baselinestretch}{1.5}
+
+% The linenumbers command from the lineno package adds line numbers
+%  alongside your text that can be useful for discussing edits 
+%  in drafts.
+% Remove or comment out the command for proper versions.
+%\usepackage[modulo]{lineno}
+% \linenumbers 
+
+
+% The multirow package adds the option to make cells span 
+%  rows in tables.
+\usepackage{multirow}
+
+% Create subfigures
+\usepackage{subcaption}
+
+% The natbib package allows book-type citations commonly used in
+%  longer works, and less commonly in science articles (IME).
+% e.g. (Saucer et al., 1993) rather than [1]
+% More details are here: http://merkel.zoneo.net/Latex/natbib.php
+\usepackage{natbib}
+
+% The bibentry package (along with the \nobibliography* command)
+%  allows putting full reference lines inline.
+%  See: 
+%   http://tex.stackexchange.com/questions/2905/how-can-i-list-references-from-bibtex-file-in-line-with-commentary
+\usepackage{bibentry}
+
+% The isorot package allows you to put things sideways 
+%  (or indeed, at any angle) on a page.
+% This can be useful for wide graphs or other figures.
+%\usepackage{isorot}
+
+% The caption package adds more options for caption formatting.
+% This set-up makes hanging labels, makes the caption text smaller
+%  than the body text, and makes the label bold.
+% Highly recommended.
+% \usepackage[format=hang,font=small,labelfont=bf]{caption}
+
+% and specially defined macros
+% We define all the macros here so we can change them later
+
+\onehalfspacing
+
+\newcommand{\rkhs}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mat}[1]{\ensuremath{\mathbf{#1}}}
+\newcommand{\dist}{\ensuremath{\rho}}
+\newcommand{\iid}{iid}
+\newcommand{\algo}{\ensuremath{\mathcal{A}}}
+\newcommand{\risk}[2]{\ensuremath{\err{#1}{#2}}}
+\newcommand{\emprisk}[2]{\ensuremath{\errh{#1}{#2}}}
+\newcommand{\trainset}{\ensuremath{S}}
+\newcommand{\poolset}{\ensuremath{P}}
+\newcommand{\unsampset}{\ensuremath{U}}
+\newcommand{\queryset}{\ensuremath{Q}}
+\newcommand{\trainsetx}{\ensuremath{S^x}}
+\newcommand{\poolsetx}{\ensuremath{P^x}}
+\newcommand{\unsampsetx}{\ensuremath{U^x}}
+\newcommand{\oracle}{\ensuremath{\mathcal{O}}}
+\newcommand{\querstrat}{\ensuremath{\mathcal{Q}}}
+
+%%%%%%%%%%%%%%%%%%%%%
+% Proof in appendix %
+%%%%%%%%%%%%%%%%%%%%%
+
+% \usepackage{environ}
+
+% \makeatletter
+% \providecommand{\@fourthoffour}[4]{#4}
+% % We define an addition for the theorem-like environments; when
+% % \newtheorem{thm}{Theorem} is declared, the macro \thm expands
+% % to {...}{...}{...}{Theorem} and with \@fourthoffour we access
+% % to it; then we make available \@currentlabel (the theorem number)
+% % also outside the environment.  
+% \newcommand\fixstatement[2][\proofname\space of]{%
+%   \ifcsname thmt@original@#2\endcsname
+%     % the theorem has been declared with \declaretheorem
+%     \AtEndEnvironment{#2}{%
+%       \xdef\pat@label{\expandafter\expandafter\expandafter
+%         \@fourthoffour\csname thmt@original@#2\endcsname\space\@currentlabel}%
+%       \xdef\pat@proofof{\@nameuse{pat@proofof@#2}}%
+%     }%
+%   \else
+%     % the theorem has been declared with \newtheorem
+%     \AtEndEnvironment{#2}{%
+%       \xdef\pat@label{\expandafter\expandafter\expandafter
+%         \@fourthoffour\csname #1\endcsname\space\@currentlabel}%
+%       \xdef\pat@proofof{\@nameuse{pat@proofof@#2}}%
+%     }%
+%   \fi
+%   \@namedef{pat@proofof@#2}{#1}%
+% }
+
+% % We allocate a block of 1000 token registers; in this way \prooftoks
+% % is 1000 and we can access the following registers of the block by
+% % \prooftoks+n (0<n<1000); we'll use a dedicated counter for it
+% % that is stepped at every proof
+% \globtoksblk\prooftoks{1000}
+% \newcounter{proofcount}
+
+% % We gather the contents of the proof as argument to \proofatend
+% % and then we store
+% % "\begin{proof}[Proof of <theoremname> <theoremnumber>]#1\end{proof}"
+% % in the next token register of the allocated block
+% \NewEnviron{proofatend}{%
+%   \edef\next{%
+%     \noexpand\begin{proof}[\pat@proofof\space\pat@label]%
+%     \unexpanded\expandafter{\BODY}}%
+%   \global\toks\numexpr\prooftoks+\value{proofcount}\relax=\expandafter{\next\end{proof}}
+%   \stepcounter{proofcount}}
+
+% % \printproofs simply loops over the used token registers of the
+% % block, freeing their contents
+% \def\printproofs{%
+%   \count@=\z@
+%   \loop
+%     \the\toks\numexpr\prooftoks+\count@\relax
+%     \ifnum\count@<\value{proofcount}%
+%     \advance\count@\@ne
+%   \repeat}
+% \makeatother
+
+% \fixstatement{theorem}
+% \fixstatement{lemma}
+% \fixstatement{proposition}
+% \fixstatement{corollary}
+
+%%%%%%%%%%%%%%%%%%%%%%
+% Links and Metadata %
+%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{bibentry}
+\makeatletter\let\saved@bibitem\@bibitem\makeatother
+% \usepackage[pdftex,hidelinks]{hyperref}
+\makeatletter\let\@bibitem\saved@bibitem\makeatother
+\makeatletter
+\AtBeginDocument{
+  \hypersetup{
+    pdfsubject={Machine Learning},
+    pdfkeywords={machine learning, SLT, MMD, active learning},
+    pdfauthor={Author},
+    pdftitle={Title},
+  }
+}
+\makeatother
+
+%%%%%%%%%%%%%%%%%%
+% Float Settings %
+%%%%%%%%%%%%%%%%%%
+
+% General parameters, for ALL pages:
+\renewcommand{\topfraction}{0.9}	% max fraction of floats at top
+\renewcommand{\bottomfraction}{0.8}	% max fraction of floats at bottom
+
+% Parameters for TEXT pages (not float pages):
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}     % 2 may work better
+\setcounter{dbltopnumber}{2}    % for 2-column pages
+\renewcommand{\dbltopfraction}{0.9}	% fit big float above 2-col. text
+\renewcommand{\textfraction}{0.07}	% allow minimal text w. figs
+
+% Parameters for FLOAT pages (not text pages):
+\renewcommand{\floatpagefraction}{0.7}	% require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+\renewcommand{\dblfloatpagefraction}{0.7}	% require fuller float pages
+
+%%%%%%%%%%%%%%%%
+% Bibliography %
+%%%%%%%%%%%%%%%%
+
+\bibliographystyle{abbrv}
+
+%%%%%%%%%%%%%%%%
+% TOC settings %
+%%%%%%%%%%%%%%%%
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Fix algorithm and hyperref interaction of counter %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\makeatletter
+\newcounter{algorithmicH}% New algorithmic-like hyperref counter
+\let\oldalgorithmic\algorithmic
+\renewcommand{\algorithmic}{%
+  \stepcounter{algorithmicH}% Step counter
+  \oldalgorithmic}% Do what was always done with algorithmic environment
+\newcommand{\theHALG@line}{ALG@line.\thealgorithmicH.\arabic{ALG@line}}
+\makeatother
+
+\begin{document}
+
+\nobibliography*
+
+\include{preamble}
+\include{introduction}
+\include{literature_review}
+\include{methodology}
+\include{experiments}
+\include{conclusions}
+\include{appendices}
+
+% Actually generates your bibliography. The fact that \include is 
+% the last thing before this ensures that it is on a clear page.
+\bibliography{references}
+
+% All done. \o/
+\end{document}
