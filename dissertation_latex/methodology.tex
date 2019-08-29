@@ -1,17 +1,17 @@
 \chapter{Active Learning using Frank Wolfe}
 \label{ch:methodology}
 In this chapter we propose an active learning algorithm based on the bound of
-\cite{viering17_nuclear_discr_activ_learn} and use FW to optimise this bound. In
+\citep{viering17_nuclear_discr_activ_learn} and use FW to optimise this bound. In
 particular we use the tools laid out in the \hyperref[ch:lit-rev]{Literature Review}
 in order to attempt to derive bounds on the excess active learning risk.
 We show that FW gives us guarantees of reducing the empiricial risk as a
-function of the size of the active learning dataset, but that it's inconclusive
+function of the size of the active learning dataset, but that it is inconclusive
 given current results on rate of convergence if it improves on the
 generalisation error compared to random sampling.
 
 \section{Setting}
-The setting largely follows that of \cite{viering17_nuclear_discr_activ_learn} and
-\cite{bach12_equiv_between_herdin_condit_gradien_algor} as we fuse these two works and
+The setting largely follows that of \citep{viering17_nuclear_discr_activ_learn} and
+\citep{bach12_equiv_between_herdin_condit_gradien_algor} as we fuse these two works and
 lean on results of both. We first specify all of our assumptions for the bound.
 
 \begin{assumption}
@@ -64,24 +64,24 @@ of the feature maps, \(\phi(x)\) and \(\phi'(x)\) for \(\rkhs{H}\) and
 \infty\), and \(\kappa' = \sup_{x \in \mathcal{X}}\sqrt{K'(x, x)} < \infty\).
 
 \section{MMD Empirical Generalisation Bound}
-We now state results from \cite{viering17_nuclear_discr_activ_learn} that will be
+We now state results from \citep{viering17_nuclear_discr_activ_learn} that will be
 used.
-\begin{theorem}[\cite{viering17_nuclear_discr_activ_learn}, Extension: Theorem 1]
+\begin{theorem}[\citep{viering17_nuclear_discr_activ_learn}, Extension: Theorem 1]
   \label{th:mmd-emp-bound}
   Let \(\ell\) be any loss, and let \(g_{f, h}(x) = \ell(f(x), h(x))\), then for
   any function \(h \in H \subseteq \rkhs{H}\), \(H\) being an arbitrary subspace of \(\rkhs{H}\), any train set
   \(\trainset \subseteq \poolset_{0}\) and let \(\rho_{\trainsetx}\) be any distribution with
   support on \(\trainsetx\) with \(\rho_{S}\) the corresponding distribution on
   \((x, f(x))_{x \in \trainset}\), then for any \(H' \subseteq \rkhs{H}'\)
-  \begin{equation}
+  \begin{equation*}
     \label{eq:MMD-gen-bound}
     \err{\poolset_{0}}{h} \leq \err{\rho_{\trainset}}{h} + \MMD{\poolsetx_{0}}{\rho_{\trainsetx}}{H'} + \eta_{MMD}
-  \end{equation}
+  \end{equation*}
 \end{theorem}
 where \(\eta_{MMD} = 2 \min_{\tilde{g} \in H'} \max_{h \in H, x \in \poolsetx_{0}} |g_{f, h}(x) - \tilde{g}(x)|\).
 
 \begin{proof}
-  This is essentially \cite[Proof of Theorem 1]{viering17_nuclear_discr_activ_learn}.
+  This is essentially \citep[Proof of Theorem 1]{viering17_nuclear_discr_activ_learn}.
   Let \(g_{f, h}(x) = \ell(f(x), h(x))\) and let \(\tilde{g}\) be any function in
   \(H'\).
 
@@ -127,7 +127,7 @@ is non-uniform which includes any FW algorithm where \(\tau_t \neq
 \frac{1}{1+t}\) which in particular includes the line-search version.
 
 We have the following result
-\begin{theorem}[\cite{viering17_nuclear_discr_activ_learn}, Theorem 2]
+\begin{theorem}[\citep{viering17_nuclear_discr_activ_learn}, Theorem 2]
   \label{thm:zero_eta_MMD}
   Let \(\ell\) be the squared loss and assume \(f, h \in B_{\gamma}\). Let \(K, K'\)
   be the kernel functions of the RKHS's \(\rkhs{H}, \rkhs{H}'\) respectively. If
@@ -159,7 +159,7 @@ contained in the ball \(B_{\gamma}\), with the risk of falling outside the
 realizable setting. While KRR and Ivanov Regression is linked
 as KRR solves a lagrangian formulation of the Ivanov Regression problem, we need
 to make sure that the output \(\hat{h} = \algo(S)\) when doing KRR is such that
-\(\norm{\hat{h}}_{\rkhs{H}} \leq \gamma\). Following the proof of \cite[Lemma
+\(\norm{\hat{h}}_{\rkhs{H}} \leq \gamma\). Following the proof of \citep[Lemma
 1]{cortes14_domain_adapt_sampl_bias_correc} we have the following
 \begin{lemma}
 \label{lem:KRR-output-ball-bound} The output of the KRR algorithm with
@@ -184,10 +184,10 @@ y_i)^2) \\ & = \frac{1}{n} \sum_{i=1}^n (2 y_i \hat{h}(x_i) - \hat{h}(x_i)^2) \\
 
   Assume that \(\hat{h} \neq 0\), otherwise this is an equality, then we can
 cancel out the norm showing that
-  \begin{equation}
+  \begin{equation*}
     \label{eq:KRR-output-ball-bound} \norm{\hat{h}}_{\rkhs{H}} \leq \frac{2 M_y
 \kappa}{\lambda}.
-  \end{equation} Setting \(\gamma = \frac{2 M_y \kappa}{\lambda}\), we see that
+  \end{equation*} Setting \(\gamma = \frac{2 M_y \kappa}{\lambda}\), we see that
 if \(\lambda = \frac{2 M_y \kappa}{\gamma}\) then the output of KRR will be in
 \(B_{\gamma}\).
 \end{proof}
@@ -225,7 +225,7 @@ Note that in general we can create ad-hoc active learning algorithms by letting
 this way we can create a family of FW-based active learning algorithms. We
 introduce the following active learning algorithm for classification, let
 \(\querstrat\) be FW and let \(\algo\) be the KRR applied to classification
-through application of the method expanded upon in \cite{ciliberto16}. We use
+through application of the method expanded upon in \citep{ciliberto16}. We use
 this to empirically investigate FW for classification in the
 \hyperref[ch:experiments]{Experiments} section.
 
@@ -236,10 +236,10 @@ supervised learning we try to bound the excess risk
 where as before \(\hat{h} = \algo(\trainset)\). We work with
 Ivanov Regression instead of Kernel Ridge Regression, where the algorithm is
 the following
-\begin{equation}
+\begin{equation*}
   \label{eq:eq:ivanov-kr}
   \algo(\trainset) = \argmin_{h \in B_{\gamma} \subseteq \rkhs{H}} \err{S}{h} = \argmin_{h \in B_{\gamma}} \frac{1}{m}  \sum_{j=1}^{m}(h(x_{j}) - y_{j})^{2},
-\end{equation}
+\end{equation*}
 as this can easily be extended to the KRR case by decomposing the generalisation
 error further.
 
@@ -307,15 +307,15 @@ of the Riez representation theorem, the operator norm can be bounded by the HS
 \end{equation}
 
 We will now use the following lemma
-\begin{lemma}[\cite{zwald06}, Lemma 1]
+\begin{lemma}[\citep{zwald06}, Lemma 1]
   \label{lem:bound-cov-operator-rkhs-hs}
   Suppose that \(\kappa^{2} \leq M\). Given any \(\rho_{\X}\) let \(\{x_{i}\}_{i=1}^{n}\) be a set sampled \(\iid\) from \(\rho_{\X}\). If \(C,
   \hat{C}_{n}\) are the true and empirical covariance operators, then with
   probability greater than \(1 - \delta\),
-  \begin{equation}
+  \begin{equation*}
     \label{eq:bound-cov-operator-rkhs-hs}
     \norm{\hat{C}_{n} - C}_{HS} \leq \frac{2M}{\sqrt{n}}\left( 1 + \sqrt{\frac{\log(1/\delta)}{2}} \right).
-  \end{equation}
+  \end{equation*}
 \end{lemma}
 using \ref{lem:bound-cov-operator-rkhs-hs} together with \ref{eq:op_leq_HS} we have
 \begin{corollary}
@@ -342,7 +342,7 @@ Let \(z_{\poolset_{0}} = \frac{1}{n} \sum_{i=1}^n \phi(x_i) y_i\) and
 \end{equation*}
 
 The following lemma will let us control the norm of \(z_{\poolset_{0}} - z_{\rho}\),
-\begin{lemma}[\cite{smale07_learn_theor_estim_via_integ}, Lemma 2]
+\begin{lemma}[\citep{smale07_learn_theor_estim_via_integ}, Lemma 2]
   \label{lem:RKHS_hoeffding}
   let \(\rkhs{H}\) be a Hilbert space and let \(\xi\) be a random variable
   on \((\X \times \Y, \rho)\), with values in \(\rkhs{H}\). Assume
@@ -350,10 +350,10 @@ The following lemma will let us control the norm of \(z_{\poolset_{0}} - z_{\rho
   \(\sigma^2(\xi) = \mathbb{E}[\norm{\xi}_{\rkhs{H}}^2]\). Let
   \(\{z_i\}_{i=1}^n\) be independent random draws of \(\rho\). For any \(0 <
   \delta < 1\), with probability \(1 - \delta\) over the draws,
-  \begin{equation}
+  \begin{equation*}
     \label{eq:RKHS_hoeffding_bound}
     \norm{\frac{1}{n}\sum_{i=1}^n\xi(z_i) - \E[\xi(z)]}_{\rkhs{H}} \leq \frac{2 M \log(2/\delta)}{n} + \sqrt{\frac{2 \sigma^2(\xi) \log(2/\delta)}{n}}
-  \end{equation}
+  \end{equation*}
 \end{lemma}
 
 We will use \ref{lem:RKHS_hoeffding} in order to bound the quantity
@@ -389,7 +389,6 @@ Thus we have that for any \(\delta \in (0, 1)\), with  probability \(1 -
   \norm{z_{\poolset_0} - z_{\rho}}_{\rkhs{H}} \leq \frac{2 M_y \kappa \log(2/\delta)}{n} + \sqrt{\frac{2 M_y^2 \kappa^2 \log(2/\delta)}{n}} = M_y \kappa \left(\frac{2\log(2/\delta)}{n} + \sqrt{\frac{2\log(2/\delta)}{n}} \right).
 \end{equation}
 
-
 \begin{description}
 \item[{(iii)}] 
 \end{description}
@@ -399,15 +398,15 @@ Thus we have that for any \(\delta \in (0, 1)\), with  probability \(1 -
 
 We can bound this using assumption \ref{as:output-bounded} which says that any
 \(y \in \Y\) is such that \(y \leq M_y\). First we introduce Hoeffding's inequality,
-\begin{theorem}[\cite{ciliberto18_advan_topic_machin_learn}, Hoeffdings Inequality]
+\begin{theorem}[\citep{ciliberto18_advan_topic_machin_learn}, Hoeffdings Inequality]
   \label{th:univariate-hoeffdings-ineq}
   Let \(X_{1}, \dots, X_{n}\) be independent random variables such that \(X_{i}
   \in [a_{i}, b_{i}]\) almost surely. Let \(\overline{X} = \frac{1}{n}
   \sum_{i=1}^n X_i\). Then
-  \begin{equation}
+  \begin{equation*}
     \label{eq:univariate-hoeffdings-ineq}
     \Pr(\abs{\overline{X} - \E[\overline{X}]} \geq \epsilon) \leq 2 \exp(-\frac{2n^2\epsilon^2}{\sum_{i=1}^n(b_i - a_i)^2}).
-  \end{equation}
+  \end{equation*}
 \end{theorem}
 Applying \ref{th:univariate-hoeffdings-ineq} to the random variables
 \(\{y_{i}\}_{i=1}^{n}\) which are sampled \(\iid\) and using that \(\abs{y}^{2}
@@ -426,7 +425,8 @@ the assumption that \(h \in B_{\gamma}\),
                                                                                     & = \gamma^2 \norm{\hat{C}_{\poolsetx_0} - C_{\rho_{\X}}}_{op} + \gamma \norm{z_{\poolsetx_0} - z_{\rho}}_{\rkhs{H}} + \abs{\frac{1}{n} \sum_{i=1}^n y_i^2 - \E_{\rho(y)}[y^2]}.
 \end{align*}
 Combining this with results
-\ref{eq:bound-cov-op-diff-in-prob}, \ref{eq:zs_RKHS_hoeffding}, \ref{eq:y2s_hoeffding} we have that with probability \(1 - 3\delta\) over \(\poolset_0\) we have that
+\ref{eq:bound-cov-op-diff-in-prob}, \ref{eq:zs_RKHS_hoeffding},
+\ref{eq:y2s_hoeffding} and using \ref{lem:combining_slt_bounds} we have that with probability \(1 - 3\delta\) over \(\poolset_0\)
 \begin{equation}
 \label{eq:uniform-bound-gen-error-over-ball}
 \begin{split}
@@ -453,10 +453,10 @@ Combining this we have that
   \label{thm:al-non-generalisation-bound}
   Given that \(f \in B_{\gamma}\), \(\eta = 4\gamma^{2}\) and for any \(x, x' \in
   \X\), \(K'(x, x') = K(x, x')^2\) the following bound holds for \(\poolset_{0} \sim \rho^{n}\) and any \(S \subseteq \poolset_0\),
-  \begin{equation}
+  \begin{equation*}
     \label{eq:al-non-generalisation-bound}
     \err{\rho}{\hat{h}} - \err{\rho}{f} \leq 2\sup_{\|h\| \leq \gamma}\abs{\err{\rho}{h} - \err{\poolset_0}{h}} + 2 \MMD{\poolset_0}{\trainset}{B_\eta}.
-  \end{equation}
+  \end{equation*}
 \end{theorem}
 
 \begin{proof}
@@ -502,7 +502,7 @@ Consider a sampling strategy that uniformly at random picks instances in
 \(\poolsetx_0\) without replacement. Since the set \(\trainset_{t}\) is now an
 empirical \(\iid\) sample from \(\poolset_{0}\) we have that
 \(\MMD{\poolsetx_{0}}{\trainsetx_{t}}{B_{\eta}} = O_{P}(\frac{1}{\sqrt{t}})\)
-\cite{tolstikhin17_minim_estim_kernel_mean_embed} which is of the same order as
+\citep{tolstikhin17_minim_estim_kernel_mean_embed} which is of the same order as
 using FW. This is the baseline we would like to improve upon.
 
 \subsection{Lower Bounding the Radius}
@@ -571,7 +571,7 @@ following
                 & = -\frac{1}{4}(n-1)\gamma^{2} - n^{-1} \gamma.
 \end{align*}
 This expression has the maximum at \(\gamma^{\ast} = -\frac{2}{n(n-1)}\) which
-gives that each \(\beta_{i} = n^{-1} + n^{-1}(n-1)^{-1} = \frac{1}{n-1}\). It's
+gives that each \(\beta_{i} = n^{-1} + n^{-1}(n-1)^{-1} = \frac{1}{n-1}\). It is
 clear that this solution is in \(F_{n-1}\) and hence we have solved the problem.
 Substituting this in for the \(\mat{\alpha}\) in
 \ref{eq:d-optim-problem}, we have that
@@ -583,10 +583,10 @@ Substituting this in for the \(\mat{\alpha}\) in
                                                          & > \frac{1}{n^{2}}
 \end{align*}
 We have thus shown that we can bound \(d\) as
-\begin{equation}
+\begin{equation*}
   \label{eq:lower-bound-on-d}
   d(\poolsetx_{0}) \geq \frac{\sqrt{\lambda_{min}(\mat{K}_{nn})}}{n}.
-\end{equation}
+\end{equation*}
 
 Unfortunately this bound is vacuous as for this to be of relevance to us we
 require \(\frac{\sqrt{\lambda_{min}(\mat{K}_{nn})}}{n} \geq c > 0\) for some
@@ -594,7 +594,7 @@ scalar \(c\) in probability over \(\poolset_{0}\). This would mean that
 \(\lambda_{min}(\mat{K}_{nn}) = \Omega(n^{2})\) in probability which does not go
 well with well-established assumptions on decay of the eigenvalues of the kernel
 matrix, for example that \(\lambda_{min}(\mat{K}_{nn}) \leq \trace(\mat{K}_{nn})
-= \Theta(n)\) according to \cite{bach13_sharp}.
+= \Theta(n)\) according to \citep{bach13_sharp}.
 
 \section{Concluding Remarks}
 At this point we have done the following; investigated the empirical excess risk
@@ -608,7 +608,7 @@ error decomposition techniques. We derive an upper bound on this that features
 an MMD term which we can optimise using FW, but current theory does not say if
 using FW in this case leads to speedups as we need to consider the sampled
 pool set as random. Nevertheless, it has been shown that FW dominates random
-(MC) sampling empirically \cite{bach12_equiv_between_herdin_condit_gradien_algor},
+(MC) sampling empirically \citep{bach12_equiv_between_herdin_condit_gradien_algor},
 and this is validated in the \hyperref[ch:experiments]{Experiments} section. We
 see this as an opportunity for future research to discover conditions that would
 give us theoretical guarantees of FW convergence dominating that of random sampling.

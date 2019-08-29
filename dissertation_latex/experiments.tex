@@ -1,22 +1,42 @@
 \chapter{Experiments}
 \label{ch:experiments}
 
+\section{Technical Contributions}
+In addition to the theoretical contributions documented in the
+\hyperref[ch:methodology]{Active Learning using Frank Wolfe} section, the work carried
+out also consisted of producing a code base of algorithms and utility code.
+
+For documentation and reproducibility purposes, this code base has been made
+available at a public Git repository hosted at GitHub with
+\href{https://github.com/IsakFalk/active_learning_code}{link here}. The code
+base is written in Python and the algorithms were implemented with the help of
+the scipy suite of libraries (scipy \citep{jones--_scipy}, matplotlib
+\citep{hunter07_matpl}, numpy \citep{oliphant--_numpy}, pandas
+\citep{mckinney_data_struc_statis_comput_python}) and scikit-learn
+\citep{pedregosa11_scikit_learn}. The algorithms have been optimised for speed
+and ease of use, such that they are vectorised to a large extent and call
+efficient routines from scipy and numpy. This includes both functions and
+classes to calculate MMD, run FW, KH and various instance sampling routines
+together with implementations of KRR for regression and classification.
+Additionally, it also contains code to reproduce this dissertation by producing the
+datasets and learning curves together with plotting.
+
 \section{Setup}
 
-As before, we will use a gaussian kernel \(K_{\sigma}(x, x') =
+As before, we will use a Gaussian kernel \(K_{\sigma}(x, x') =
 \exp(-\frac{\norm{x - x'}_2^2}{2\sigma^2})\). We split the experiments into
 \textit{agnostic} and \textit{realisable}. All datasets were normalised in both
 input and output over the whole dataset. We produce learning curves on the
 test set in order to analyse the generalisation performance of the active
 learning algorithms.
 
-For agnostic we do the following: \(D\) is the total dataset Due
+For the agnostic setting we do the following: Let \(D\) be the total dataset. Due
 to computational feasibility, we have a threshold \(n_{sub}\), if the size of
 \(D\) is greater than this, we randomly subsample \(n_{sub}\) datapoints from
 \(D\) and let \(D\) be this smaller dataset. \(D\) is then split into two sets,
 \(\trainset_{train+test}\) (80\%) and \(\trainset_{val}\) (20\%). We use
 \(\trainset_{val}\) to do 5-fold cross validation \((kCV)\) and get optimal
-hyperparamters \(\sigma_{opt}, \lambda_{opt}\) for algorithm \(\algo\) which will
+hyperparamaters \(\sigma_{opt}, \lambda_{opt}\) for algorithm \(\algo\) which will
 be KRR.
 
 The dataset \(\trainset_{train+test}\) is split into 5 folds \([S_1, \dots,
@@ -25,37 +45,61 @@ is chosen by letting \(\trainset_{train} = S_i\), and test set
 \(\trainset_{test} = \trainset_{train+test} \setminus \trainset_{train}\). The
 train set will correspond to \(\poolset_{0}\). \(\trainset_{0} =
 \emptyset\) and for the first iteration, \(t=1\), we add the first instance
-\(x_{1} \in \poolset_{0}\) so that \(\trainset_{1} = \{(x_{1}, y_{1})\}\) and
+\(x_{1} \in \poolsetx_{0}\) so that \(\trainset_{1} = \{(x_{1}, y_{1})\}\) and
 after this we use the querying strategy \(\querstrat\) at each \(t > 1\) to
 choose what instance to query\footnote{This is necessary as the algorithms
   require an instance for the updates to be well-defined.}. At each time \(t\),
-after querying an instance, we fit the algorithm \(\algo\) to the current train
+after querying an instance and adding it to the train set, we fit the algorithm \(\algo\) to the current train
 set \(\trainset_{t}\) giving us a hypothesis \(\hat{h}_{t}\) with which we get
 the current loss \(l_{t} = \err{\trainset_{test}}{\hat{h}_{t}}\) where the loss
 will be the squared loss for regression (MSE) and the zero-one loss for
-classification (Accuracy).
+classification (Accuracy). The losses are gathered in a loss matrix \(\mat{L}
+\in \R^{5 \times |S_{test}|}\) and we use this to calculate the mean and
+standard deviation of the learning curves over the 5 runs which we later plot.
+For stochastic sampling algorithms we run the algorithm 5 times over each fold
+\(i\) and return the mean over the 5 runs.
 
 For the realisable setting, we proceed almost in the same way. The only
 difference is that after potentially subsampling \(D\), we get the optimal
-hyperparameters doing 5-fold \(kCV\) on the dataset \(D\), fit a ground-truth
+hyperparameters doing 5-fold \(kCV\) on the whole dataset \(D\), fit a ground-truth
 hypothesis using KRR with these hyperparameters, which we'll call
 \(h_{realisable}\). Finally we replace the outputs of \(D = \{(x_i,
-y_i)_{i=1}^n\}\) with \(h_{realisable}(x_i)\). This will ensure that the
+y_i)\}_{i=1}^n\) with \(h_{realisable}(x_i)\). This will ensure that the
 assumptions of no noise and realisability are satisfied. The rest is the same as
 in the agnostic setting.
 
-We compare the FW (KH, step-size \(\rho_t = \frac{1}{1+t}\)) algorithm with
-random subsampling (MC) and Leverage Score sampling (Levscore (deterministic)) \cite{rudi18}, where we
-calculate the leverage scores and pick the instances in descending order of the
-leverage scores (we choose the \(\lambda\) of the leverage scores to be the same
-as \(\lambda_{opt}\) gotten through \(kCV\)).
+We compare the FW in the form of KH (FW-kh) algorithm with
+random subsampling (MC) and Leverage Score sampling (LS-rand) \citep{rudi18}, where we
+calculate the leverage scores and sample the instances without replacement
+according to the discrete
+distribution proportional to the
+leverage scores. We tried choosing the instances by sorting them in descending
+order according to the leverage scores but it worked very poorly so therefore it
+is not included in the learning curve plots, we call this LS-det for
+deterministic Leverage Score sampling. We choose the \(\lambda\) of the
+leverage scores to be the same as
+\(\lambda_{opt}\) gotten through
+\(kCV\). 
 
 \section{Datasets}
 
 We evaluate the algorithms on 5 regression datasets and 2 classification
-datasets. These were sourced from the UCI dataset repository \cite{dua17_uci_machin_learn_repos} and through the
-sklearn dataset API \cite{dua17_uci_machin_learn_repos}. Some of the datasets
+datasets. These were sourced from the UCI dataset repository \citep{dua17_uci_machin_learn_repos} and through the
+sklearn dataset API \citep{pedregosa11_scikit_learn}. Some of the datasets
 were changed to remove non-continuous variables. The datasets are the following
+for regression 
+\begin{itemize}
+\item bike sharing (day)
+\item boston
+\item concrete
+\item red wine
+\item white wine
+\end{itemize}
+and the following for classification
+\begin{itemize}
+\item mnist
+\item yeast
+\end{itemize}
 
 \section{Analysis}
 
@@ -63,65 +107,69 @@ In this section we will analyse a subset of the learning curves produced. All of
 the learning curves can be found in the appendix for the
 \hyperref[figs:agnostic-regression-learning-curves]{agnostic regression},
 \hyperref[figs:realisable-regression-learning-curves]{realisable regression} and
-\hyperref[figs:agnostic-classification-learning-curves]{agnostic
-  classification}. The rest of the learning curves are similar and do not retract
-from the analysis in any significant way.
+\hyperref[figs:agnostic-classification-learning-curves]{agnostic classification}. The rest of the learning curve are similar and do not retract
+from the analysis in a significant way. 
 
 Since there is no standardised way on how to evaluate the performance of active
-learning algorithms against each other empirically, we will analyse the curves
-directly.
+learning algorithms against each other empirically, we will analyse the curves directly.
 
-\begin{figure}[h] \centering
+\begin{figure}[ht] \centering
   \label{fig:learning-curve-boston-agnostic-experiments}
   \includegraphics[width=0.8\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-boston.png}
-  \caption{Learning curve (bold line is mean with shaded region being \(\pm 1\)
-    standard deviation over the 5 folds) for agnostic regression on Boston dataset
-    comparing FW (KH) with MC and Levscore. The \(y\)-axis is MSE (Mean Squared
+  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\)
+    standard deviation over the 5 folds) for agnostic regression on boston dataset
+    comparing FW-kh with MC and LS-rand. The \(y\)-axis is MSE (Mean Squared
     Error), \(x\)-axis is \(t\) (number of datapoints in current active learning
     train set). A good algorithm will have a trajectory that goes down quickly with
     \(t\). MC is baseline.}
-  \label{fig:mesh1}
 \end{figure}
 
-\begin{figure}[h] \centering
+\begin{figure}[ht] \centering
   \label{fig:learning-curve-boston-realisable-experiments}
   \includegraphics[width=0.8\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold_realisable-boston.png}
-  \caption{Learning curve (bold line is mean with shaded region being \(\pm 1\)
-    standard deviation over the 5 folds) for realisable regression on Boston dataset
-    comparing FW (KH) with MC and Levscore. The \(y\)-axis is MSE (Mean Squared
+  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\)
+    standard deviation over the 5 folds) for realisable regression on boston dataset
+    comparing FW-kh with MC and LS-rand. The \(y\)-axis is MSE (Mean Squared
     Error), \(x\)-axis is \(t\) (number of datapoints in current active learning
     train set). A good algorithm will have a trajectory that goes down quickly with
     \(t\). MC is baseline.}
-  \label{fig:mesh1}
 \end{figure}
 
 
 For agnostic regression (here the
-\hyperref[fig:learning-curve-boston-agnostic-experiments]{Boston dataset}), in
-general we see that FW (KH) performs well, going down quickly in the start and
-outperforming MC (in mean) at all \(t\). Levscore performs poorly for the first
-50 \(t\) which can be explained by the fact that it does not take into account
-the already queried instances, only focusing on those with high leverage. This
-means that while it focuses on \textit{informativeness} of the instances chosen,
-it does not implement a way to choose \textit{representative} instances.
-Nevertheless it performs well towards the end of the plot. MC goes down slowly
-which is what you would expect, since it does not care about informativeness but
-only about representativeness. FW (KH) arguably care about both as it chooses
+\hyperref[fig:learning-curve-boston-agnostic-experiments]{boston dataset}), in
+general we see that FW-kh performs well, going down quickly after an initial
+period in the start and
+outperforming MC (in mean) at almost all \(t\). LS-rand performs similar to MC
+but approached FW-kh as \(t\) increases. MC behaves as LS-rand in the beginning
+but does not approach FW-ls towards the end as LS-rand does. Putting this in the
+context of the criteria we proposed in \hyperref[Active Learning Theory Review]{sec:al-theory-review} a querying strategy should have, we can say
+ both FW-ls and LS-rand has a way to choose instances that are
+\textit{informative} and \textit{representative} while MC only focus on creating
+a train set that is representative which is why it performs poorly compared to
+FW-ls and LS-rand. FW-kh arguably care about both informativeness and
+representativeness as it chooses
 instances in such a way that the set \(\trainsetx_t\) resembles \(\poolsetx_0\)
-which means that it will focus early on building a train set that contains the
-instances that can explain the statistical properties of \(\poolsetx_0\). The
+which means that it will focus early on on building a train set that contains the
+instances that can explain the statistical properties of \(\poolsetx_0\) while
+using negative autocorrelation to make sure that each new instance queried is
+different from the current instances in \(\trainsetx_t\).
+LS-rand is harder to analyse in this way but in general it seems like instances
+which are outliers (or have high leverage) are given precedence over instances
+that are close to the bulk of the dataset. The
 analysis for the realisable setting (as in here for
-\hyperref[fig:learning-curve-boston-realisable-experiments]{Boston dataset}) is
-essentially the same, although we see that the curves goes towards 0 which is to
-be expected since now the function \(f\) is in the hypothesis class which is not
+\hyperref[fig:learning-curve-boston-realisable-experiments]{boston dataset}) is
+essentially the same although here FW-ls can be seen to have definitive
+advantage over both LS-rand and MC. We see that the curves goes towards 0 which is to
+be expected since now the true function \(f\) is in the hypothesis class which is not
 true for the agnostic case.
 
-\begin{figure}[h] \centering
+\begin{figure}[ht] \centering
   \label{fig:learning-curve-mnist-agnostic-experiments}
   \includegraphics[width=0.8\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-mnist.png}
-  \caption{Learning curve (bold line is mean with shaded region being \(\pm 1\)
+  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\)
     standard deviation over the 5 folds) for agnostic classification on mnist
-    comparing FW (KH) with MC and Levscore. The \(y\)-axis is Accuracy, \(x\)-axis
+    comparing FW-kh with MC and LS-rand. The \(y\)-axis is Accuracy, \(x\)-axis
     is \(t\) (number of datapoints in current active learning train set). A good
     algorithm will have a trajectory that goes up quickly with \(t\). MC is
     baseline.}
@@ -129,22 +177,21 @@ true for the agnostic case.
 
 For agnostic classification (here the
 \hyperref[fig:learning-curve-mnist-agnostic-experiments]{mnist dataset}) we see
-that FW (KH) does a very good job at choosing good instances. The red curve
-outperforms MC and Levscore essentially everywhere except for in the very
-beginning. Levscores poor performance can be explained that it is mainly a
-method to choose instances that has high leverage for regression, but this does
-not apply when doing classification. An explanation for the good performance of
-FW (KH) is that it is practically \textit{mode seeking} as can be seen in
+that FW-kh does a very good job at choosing good instances. The red curve, FW-ls,
+outperforms MC and LS-rand essentially everywhere except for in the very
+beginning. LS-rand and MC performs essentially the same for mnist. An explanation for the good performance of
+FW-kh is that it is practically \textit{mode seeking} as can be seen in
 \hyperref[fig:kh-is-mode-seeking]{this figure}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \centering
   \label{fig:kh-is-mode-seeking}
   \includegraphics[width=1.0\textwidth]{../active_learning_code/reports/figures/kh_is_mode_seeking_mog.png}
-  \caption{Comparison of the first 9 instances chosen by FW (KH), MC and
-    Levscore. The data was generated by sampling 50 datapoints from 9 gaussian
-    distributions with means from the set \(\{(i, j)| i, j \in \{-1, 0, 1\}\}\)  and covariance matrix being the
+  \caption{Comparison of the first 9 instances chosen by FW-kh, MC, LS-det and
+    LS-rand. The data was generated by sampling 50 datapoints from 9 Gaussian
+    distributions each, with means from the set \(\{(i, j)| i, j \in \{-1, 0, 1\}\}\)  and covariance matrix being the
     identity matrix scaled by 0.01. The kernel matrix was created by using a
-    gaussian kernel with \(\sigma^{2} = 0.02\) which was fine-tuned to exhibit
-    this phenomenon.}
+    Gaussian kernel with \(\sigma^{2} = 0.02\) which was fine-tuned to exhibit
+    this phenomenon. We put \(\lambda = \sigma^2\) for LS-rand and LS-det. Note
+    that FW-kh only require 9 iterations to find an instance from each class.}
 \end{figure}

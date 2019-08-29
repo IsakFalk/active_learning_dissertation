@@ -1,4 +1,4 @@
-\documentclass[11pt,mres,a4paper,oneside]{ucl_thesis}
+\documentclass[11pt,mres,a4paper,twoside]{ucl_thesis}
 
 %%%%%%%%%%%%%
 % Packages  %
@@ -57,7 +57,8 @@
 %  longer works, and less commonly in science articles (IME).
 % e.g. (Saucer et al., 1993) rather than [1]
 % More details are here: http://merkel.zoneo.net/Latex/natbib.php
-\usepackage{natbib}
+\usepackage[authoryear,square]{natbib}
+\setcitestyle{citesep={;}}
 
 % The bibentry package (along with the \nobibliography* command)
 %  allows putting full reference lines inline.
@@ -177,8 +178,8 @@
   \hypersetup{
     pdfsubject={Machine Learning},
     pdfkeywords={machine learning, SLT, MMD, active learning},
-    pdfauthor={Author},
-    pdftitle={Title},
+    pdfauthor={John Isak Texas Falk},
+    pdftitle={Active Learning Regression by Mitigating Domain Drift},
   }
 }
 \makeatother
@@ -207,8 +208,7 @@
 %%%%%%%%%%%%%%%%
 % Bibliography %
 %%%%%%%%%%%%%%%%
-
-\bibliographystyle{abbrv}
+\bibliographystyle{abbrvnat}
 
 %%%%%%%%%%%%%%%%
 % TOC settings %
@@ -240,11 +240,14 @@
 \include{methodology}
 \include{experiments}
 \include{conclusions}
-\include{appendices}
 
 % Actually generates your bibliography. The fact that \include is 
 % the last thing before this ensures that it is on a clear page.
 \bibliography{references}
+
+\appendix
+
+\include{appendices}
 
 % All done. \o/
 \end{document}

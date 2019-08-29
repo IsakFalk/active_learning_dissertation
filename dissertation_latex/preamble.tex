@@ -2,9 +2,9 @@
 %  but given that some people needed it, if you need a different degree title 
 %  (e.g. Master of Science, Master in Science, Master of Arts, etc)
 %  uncomment the following 3 lines and set as appropriate (this *has* to be before \maketitle)
-% \makeatletter
-% \renewcommand {\@degree@string} {Master of Things}
-% \makeatother
+\makeatletter
+\renewcommand {\@degree@string} {Master of Research in Financial Computing}
+\makeatother
 
 \title{Active Learning Regression by Mitigating Domain Drift}
 \author{John Isak Texas Falk}
@@ -31,25 +31,29 @@
   In this work we focus on noiseless regression where we devise an algorithm
   that chooses instances to label sequentially and train a Kernel Ridge Regression
   on this data. Central to this is the Frank Wolfe algorithm which greedily
-  optimises the Maximum Mean Discrepancy between the full dataset and currently
+  optimises the maximum mean discrepancy between the full dataset and currently
   chosen instances. This leads to an algorithm that optimises an upper bound on
-  the empirical risk of the estimator trained on the built train set. We try to
-  control the true generalisation error but current results from convergence of
-  Frank Wolfe means we cannot say whether or not this improves upon random
-  sampling in theory.
+  the empirical risk of the estimator trained on the built train set. We analyse
+  the generalisation performance of this algorithm and proceed to bound the excess
+  risk but current results from convergence of Frank Wolfe means we cannot say
+  whether or not this improves upon random sampling in theory.
 
   % Results
   We apply this algorithm to a wide range of datasets and compare it to leverage
   score sampling and random sampling. We show that the algorithm performs
   competitively compared to the other algorithms and illustrate the advantage of active
-  learning in practice. We also show that it dominates the other methods in the
+  learning in practice. We also show that it performs better than the other methods in the
   agnostic setting of both regression and classification.
 
   % Conclusion
-  This shows that using Frank Wolfe to mitigate domain drift is competitive and
+  This shows that using Frank Wolfe to mitigate domain drift when doing active
+  learning for regression is competitive and
   works well in practice, with learning curves that show better performance
   than random sampling on a wide range of datasets in both agnostic and
-  realisable setting.
+  realisable setting. Finally we discuss future work of analysing performance of the
+  algorithm in the noise setting and the potential to use random projections and
+  subsampling inside of the Frank Wolfe iteration to lower computational and
+  memory resources needed.
 \end{abstract}
 
 \begin{impactstatement}

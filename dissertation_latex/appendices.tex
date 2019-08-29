@@ -1,9 +1,8 @@
-
-\chapter{Appendix}
-
-\section{Additional Theorems and Proofs}
+\chapter{Auxiliary Theorems, Proofs and Definitions}
 \label{sec:appendix-proofs}
 % \printproofs
+
+\section{Theorems and Proofs}
 
 \begin{lemma}[Combining SLT bounds]
   \label{lem:combining_slt_bounds}
@@ -13,9 +12,9 @@
   \epsilon_i(\delta)\}\) where \(\Pr(E_i) \geq 1 - \delta\). Given the event
   \(\tilde{E} = \{x : |B_{k} - B_{1}| \leq \sum_{i=1}^{k-1}\epsilon_i(\delta)\}\) we
   have that
-  \begin{equation}
+  \begin{equation*}
     \Pr(\tilde{E}) \geq 1 - (k-1) \delta
-  \end{equation}
+  \end{equation*}
   or by rescaling \(\tilde{\delta} = \frac{\delta}{k-1}\) that
   \begin{equation}
     \Pr(|B_{k} - B_1| \leq \sum_{i=1}^{k-1}\epsilon_i(\frac{\delta}{k-1})) \geq 1 - \delta
@@ -43,10 +42,9 @@
   \end{align*}
 \end{proof}
 
-
 \section{Convex Analysis}
 We introduce the necessary concepts from convex analysis used in the analysis of
-convergence of KH and FW. We will follow \cite{boyd04_convex}.
+convergence of KH and FW. We will follow \citep{boyd04_convex}.
 
 \begin{definition}
   \label{def:conv-hull}
@@ -87,8 +85,8 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
   where \(\clos(C)\) is the closure of \(C\).
 \end{definition}
 
-\section{Experiments}
-\subsection{Procedures}
+\chapter{Experiments}
+\section{Procedures}
 \FloatBarrier
 
 \begin{algorithm}[htb]
@@ -174,7 +172,7 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
 
 \FloatBarrier
 
-\subsection{Plots}
+\section{Plots}
 \begin{figure}[htb]
   \label{figs:agnostic-regression-learning-curves}
   \centering
@@ -269,7 +267,7 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
 
 \FloatBarrier
 
-\subsection{Datasets and Hyperparameters}
+\section{Datasets and Hyperparameters}
 
 \begin{table}[H]
   \centering
@@ -277,7 +275,7 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
   table head=\toprule Dataset & $n$ & $d$ & $\lambda_{opt}$ & $\sigma_{opt}$ \\\midrule
   ]{../active_learning_code/reports/hyperparams/agnostic_regression_hyperparams.csv}
   \vspace{0.5cm}
-  \caption{Table for Agnostic Regression containing dataset information and hyperparameters.
+  \caption{Table for agnostic regression containing dataset information and hyperparameters.
     The columns are the following: Dataset is the name of the dataset, \(n\) is the size, \(d\) the number of
     dimensions, \(\lambda_{opt}\) and \(\sigma_{opt}\) the hyperparameters chosen
     for KRR using \(kCV\).}
@@ -292,7 +290,7 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
   table head=\toprule Dataset & $n$ & $d$ & $\lambda_{opt}$ & $\sigma_{opt}$ \\\midrule
   ]{../active_learning_code/reports/hyperparams/realisable_regression_hyperparams.csv}
   \vspace{0.5cm}
-  \caption{Table for Realisable Regression containing dataset information and hyperparameters.
+  \caption{Table for realisable regression containing dataset information and hyperparameters.
     The columns are the following: Dataset is the name of the dataset, \(n\) is the size, \(d\) the number of
     dimensions, \(\lambda_{opt}\) and \(\sigma_{opt}\) the hyperparameters chosen
     for KRR using \(kCV\).}
@@ -307,7 +305,7 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
   table head=\toprule Dataset & $n$ & $d$ & $\lambda_{opt}$ & $\sigma_{opt}$ \\\midrule
   ]{../active_learning_code/reports/hyperparams/agnostic_classification_hyperparams.csv}
   \vspace{0.5cm}
-  \caption{Table for Agnostic Classification containing dataset information and hyperparameters.
+  \caption{Table for agnostic classification containing dataset information and hyperparameters.
     The columns are the following: Dataset is the name of the dataset, \(n\) is the size, \(d\) the number of
     dimensions, \(\lambda_{opt}\) and \(\sigma_{opt}\) the hyperparameters chosen
     for KRR using \(kCV\).}

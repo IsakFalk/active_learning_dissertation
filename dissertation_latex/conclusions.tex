@@ -26,7 +26,7 @@ We decompose the excess risk of the estimator of the active learning
 algorithm and derived an upper bound on this which holds with high probability.
 Given current theoretical results, we show that this do not yield an
 improvement over random sampling, however this might change in the future, since
-the conditions given for FW to converge faster are sufficient, but not
+the current conditions given for FW to converge faster are sufficient, but not
 necessary.
 
 We investigate the performance empirically and see that FW in the form of KH
@@ -39,7 +39,7 @@ setting. For classification this can potentially be explained by KH being mode s
 
 We conclude that KH and in general FW is a competitive way of choosing which
 instances to label for active learning and that it has good properties whenever
-there is an MMD bound to optimise. The family of FW algorithms have a convergence rate which is
+there is an MMD bound to optimise. The family of FW algorithms has convergence rates which are
 provably faster over random sampling which enables us to reduce the empirical
 risk fast, and work well in practice on both regression and classification. This
 is as far as we are aware the only place where the theoretical properties of FW
@@ -52,8 +52,11 @@ can be leveraged. In addition to this it would also be interesting and helpful t
 consider losses other than the squared error loss which would require taking the
 output of the algorithm into account, making it adaptive. Finally, I believe
 there is a potential direction of using dimensionality reduction together with
-active learning akin to what is done in \cite{rudi18} in order to reduce the
+active learning akin to what is done in \citep{rudi18} in order to reduce the
 complexity of the training and prediction of KRR, meaning we could apply the
-active learning algorithm to bigger datasets without the need to subsample. In
-this way it would be reasonable to look at random projection techniques.
+active learning algorithm to bigger datasets without the need to subsample, or
+show that subsampling in a deliberate way can lead to small or no loss in statistical
+performance. In this way it would be reasonable to look at random projection
+techniques and also work done in leverage score sampling where computational and
+memory constraints are improved without loss of statistical performance.
 
