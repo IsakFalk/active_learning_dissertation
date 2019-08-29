@@ -15,31 +15,39 @@
 
 \begin{abstract} % 300 word limit
   % Motivation / Purpose
-  Active learning enables an algorithm to choose a subset training set of a dataset to
-  label while retaining most of the performance as if training on the full dataset.
-  When labelling data is costly but finding instances cheap, this can lead to
-  massive cost reduction over supervised learning.
+  Active learning enables an algorithm to label a small proportion of a full
+  dataset, where labels are unknown, in such a way that training on this smaller
+  labelled subset will perform similar to as if the algorithm was trained on the
+  full datasets with all labels known. When labelling data is costly but finding
+  instances cheap, this can lead to massive cost reduction over supervised
+  learning.
+
   % Problem
-  While active learning for classification has been explored both theoretically and practically, there
-  is much less work done on regression.
+  Active learning can be considered for both classification and regression.
+  While active learning for classification has been explored both theoretically
+  and practically, there is much less work done on regression.
+
   % Method
-  In this work we focus on noiseless regression where we devise an algorithm to
-  pick instances to label and train a Kernel Ridge Regression on this data.
-  Central to this is the Frank Wolfe algorithm which greedily optimises the Maximum Mean
-  Discrepancy between the full dataset and train set. This leads to an algorithm
-  that optimises an upper bound on the empirical risk of the estimator trained
-  on the built train set. We try to control the true generalisation error but
-  current results from convergence of Frank Wolfe means we can't say whether or
-  not this improves upon random sampling.
+  In this work we focus on noiseless regression where we devise an algorithm
+  that chooses instances to label sequentially and train a Kernel Ridge Regression
+  on this data. Central to this is the Frank Wolfe algorithm which greedily
+  optimises the Maximum Mean Discrepancy between the full dataset and currently
+  chosen instances. This leads to an algorithm that optimises an upper bound on
+  the empirical risk of the estimator trained on the built train set. We try to
+  control the true generalisation error but current results from convergence of
+  Frank Wolfe means we cannot say whether or not this improves upon random
+  sampling in theory.
+
   % Results
-  We apply the algorithm to a wide range of datasets and compare it to leverage
-  score sampling. We show that the algorithm performs competitevely with other
-  algorithms and the benefit of using active learning for regression. We also
-  show that it dominates other methods in the agnostic setting of both
-  regression and classification.
+  We apply this algorithm to a wide range of datasets and compare it to leverage
+  score sampling and random sampling. We show that the algorithm performs
+  competitively compared to the other algorithms and illustrate the advantage of active
+  learning in practice. We also show that it dominates the other methods in the
+  agnostic setting of both regression and classification.
+
   % Conclusion
-  We show that using Frank Wolfe to mitigate domain drift is competitive and
-  works well in practice, with learning curves that show greater performance
+  This shows that using Frank Wolfe to mitigate domain drift is competitive and
+  works well in practice, with learning curves that show better performance
   than random sampling on a wide range of datasets in both agnostic and
   realisable setting.
 \end{abstract}
@@ -76,7 +84,7 @@
 % \url{http://results.ref.ac.uk/Results/SelectUoa}.
 % \end{quote}
 
-The knowledge and algorithms in this dissertation have the potential to have
+The knowledge and algorithms in this dissertation have the potential for
 industrial use in any setting where labelling is costly, or when there is a
 fixed budget of how many instances it is possible to label. This is a setting
 which occur in many different areas, to name a few, medical healthcare, process
@@ -87,7 +95,7 @@ both locally and internationally, by anyone anywhere.
 From an academic point of view, the information and knowledge in this
 dissertation will act as a springboard for future researchers and students, and
 add to the existing pool of knowledge in the field of machine learning. The hope
-it that this will foster further ideas on how to improve the field of active
+is that this will foster further ideas on how to improve the field of active
 learning for regression, building on results derived here and extending it to
 more general and different settings.
 \end{impactstatement}

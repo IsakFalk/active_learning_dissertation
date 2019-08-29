@@ -1,4 +1,4 @@
-\chapter{Conclusions and future directions}
+\chapter{Conclusions and Future Directions}
 \label{ch:conclusions}
 
 % Should respond to
@@ -7,51 +7,53 @@
 % and Resulting Conclusions
 % + Recommendations
 
-In this dissertation we have done the following; Introduced the field of active
+In this dissertation we have done the following; introduced the field of active
 learning, where we produced an overview of the field in general before diving
 deep into the current work on active learning for regression using RKHS theory,
-statistical learning theory and optimisation in the form of kernel herding and
-frank Wolfe. Since the work married ideas from different fields we also provided
+statistical learning theory and optimisation in the form of Kernel Herding and
+Frank Wolfe. Since the work married ideas from different fields we also provided
 a review of the necessary concepts of RKHS theory from kernels to MMD and the
 necessary concepts for supervised learning from a statistical learning point of view.
 
 From this we identified work in the field of active learning
 regression upon which we base our work and relate it to. Using an error bound
 which split up into a data-fitting term and a domain drift term in the form of
-the MMD between the original sampled dataset and the build train set, we applied
+the MMD between the original sampled dataset and the built train set, we apply
 FW to this in order to optimise it, which guarantees a theoretical convergence
 which dominates random sampling.
 
-We decompose the generalisation error of the estimator of the active learning
+We decompose the excess risk of the estimator of the active learning
 algorithm and derived an upper bound on this which holds with high probability.
-However, given the current work, we show that this do not yield an improvement
-over random sampling, however this might change in the future, since the
-conditions given for FW to converge faster are sufficient, but not necessary.
+Given current theoretical results, we show that this do not yield an
+improvement over random sampling, however this might change in the future, since
+the conditions given for FW to converge faster are sufficient, but not
+necessary.
 
 We investigate the performance empirically and see that FW in the form of KH
-does very well when compared to the random sampling baseline (MC) and against
-leverage scores which is a commonly used method in regression for subsampling a
+does well when compared to the random sampling baseline (MC) and against
+Leverage Scores (LS-rand) which is a commonly used method in regression for subsampling a
 dataset or doing dimensionality reduction. We show that this holds both for the
 realisable regression case where we can control the complexity term in the empirical bound
-by making it zero, but also in the agnostic regression and classification. For
-classification this can potentially be explained by KH being mode seeking.
+by making it zero, but also empirically in the agnostic regression and classification
+setting. For classification this can potentially be explained by KH being mode seeking.
 
 We conclude that KH and in general FW is a competitive way of choosing which
-instance to label for active learning and that it has good properties whenever
-there is an MMD bound to optimise. They have a convergence rate which is
+instances to label for active learning and that it has good properties whenever
+there is an MMD bound to optimise. The family of FW algorithms have a convergence rate which is
 provably faster over random sampling which enables us to reduce the empirical
 risk fast, and work well in practice on both regression and classification. This
 is as far as we are aware the only place where the theoretical properties of FW
 has been used to show in theory how FW can give guarantees when optimising this
-empirical error bound.
+empirical error bound for active learning.
 
 There are various avenues for further research. It would be fruitful to
 investigate the setting of output noise and extend the framework to see how FW
-can be leveraged. In addition to this it'd also be interesting and helpful to
+can be leveraged. In addition to this it would also be interesting and helpful to
 consider losses other than the squared error loss which would require taking the
 output of the algorithm into account, making it adaptive. Finally, I believe
 there is a potential direction of using dimensionality reduction together with
 active learning akin to what is done in \cite{rudi18} in order to reduce the
 complexity of the training and prediction of KRR, meaning we could apply the
-active learning algorithm to bigger datasets without the need to subsample.
+active learning algorithm to bigger datasets without the need to subsample. In
+this way it would be reasonable to look at random projection techniques.
 

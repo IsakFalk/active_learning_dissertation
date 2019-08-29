@@ -1,8 +1,48 @@
+
 \chapter{Appendix}
 
-\section{Proofs}
+\section{Additional Theorems and Proofs}
 \label{sec:appendix-proofs}
 % \printproofs
+
+\begin{lemma}[Combining SLT bounds]
+  \label{lem:combining_slt_bounds}
+  Let \(\{B_k(x)\}_{i=1}^{k-1}\) be a collection of functions, where \(k \geq 1\) and \(B_k := B_k(x)\) is
+  some real number depending on \(x \in \mathcal{X}\), where we have a density
+  \(\rho\) on \(\mathcal{X}\). Let \(E_i = \{x : |B_{i+1} - B_{i}| \leq
+  \epsilon_i(\delta)\}\) where \(\Pr(E_i) \geq 1 - \delta\). Given the event
+  \(\tilde{E} = \{x : |B_{k} - B_{1}| \leq \sum_{i=1}^{k-1}\epsilon_i(\delta)\}\) we
+  have that
+  \begin{equation}
+    \Pr(\tilde{E}) \geq 1 - (k-1) \delta
+  \end{equation}
+  or by rescaling \(\tilde{\delta} = \frac{\delta}{k-1}\) that
+  \begin{equation}
+    \Pr(|B_{k} - B_1| \leq \sum_{i=1}^{k-1}\epsilon_i(\frac{\delta}{k-1})) \geq 1 - \delta
+  \end{equation}
+  %(Could do it more general by having a sequence of coefficients
+  %\((\alpha_i)_{i=1}^{k-1}\) which sum to \(k-1\) and are non-negative, but can
+  %do it later if need be).
+\end{lemma}
+\begin{proof}
+  It's simple to see that \(\cap_{i=1}^{k-1}E_i \subset \tilde{E}\) since by
+  triangle inequality
+  \begin{equation*}
+    |B_{k} - B_1| \leq \sum_{i=1}^{k-1}|B_{i+1} - B_i| \leq \sum_i^{k-1} \epsilon_i(\delta).
+  \end{equation*}
+  This means that
+  \begin{equation*}
+    \Pr(\cap_{i=1}^{k-1}E_i) \leq \Pr(\tilde{E}),
+  \end{equation*}
+  and working with the lower bound we see that
+  \begin{align*}
+    \Pr(\cap_{i=1}^{k-1}E_i) & = 1 - \Pr(\neg \cap_{i=1}^{k-1}E_i) \\
+                                    & = 1 - \Pr(\cup_{i=1}^{k-1} \neg E_i) \\
+                                    & \geq 1 - \sum_{i=1}^{k-1} \Pr(\neg E_i) \\
+                                    & \geq 1 - (k-1)\delta.
+  \end{align*}
+\end{proof}
+
 
 \section{Convex Analysis}
 We introduce the necessary concepts from convex analysis used in the analysis of
@@ -10,41 +50,41 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
 
 \begin{definition}
   \label{def:conv-hull}
-  The Convex Hull of a set \(\mathcal{C}\) is denoted by \(\convhull(C)\) and is defined as
+  The Convex Hull of a set \(C\) is denoted by \(\convhull(C)\) and is defined as
   \begin{equation}
     \label{eq:conv-hull}
-    \convhull(\mathcal{C}) = \{ \sum_{i \in I}^n \theta_{i} x_i | \theta_i \geq 0, \forall i \in I, \sum_{i \in I} \theta_i = 1 \}
+    \convhull(C) = \{ \sum_{i \in I}^n \theta_{i} x_i | \theta_i \geq 0, \forall i \in I, \sum_{i \in I} \theta_i = 1 \}
   \end{equation}
-  where \(I\) is an index set of elements in \(\mathcal{C}\).
+  where \(I\) is an index set of elements in \(C\).
 \end{definition}
 
 \begin{definition}
   \label{def:aff-hull}
-  The Affine Hull of a set \(\mathcal{C}\) is denoted by \(\affhull(C)\) and is defined as
+  The Affine Hull of a set \(C\) is denoted by \(\affhull(C)\) and is defined as
   \begin{equation}
     \label{eq:aff-hull}
-    \affhull(\mathcal{C}) = \{ \sum_{i \in I}^n \theta_{i} x_i | \theta_i \in \R, \forall i \in I, \sum_{i \in I} \theta_i = 1 \}
+    \affhull(C) = \{ \sum_{i \in I}^n \theta_{i} x_i | \theta_i \in \R, \forall i \in I, \sum_{i \in I} \theta_i = 1 \}
   \end{equation}
-  where \(I\) is an index set of elements in \(\mathcal{C}\).
+  where \(I\) is an index set of elements in \(C\).
 \end{definition}
 
 \begin{definition}
   \label{def:relative-interior}
-  The Relative Interior of a set \(\mathcal{C}\) is denoted by \(\relint(C)\) and is defined as
+  The Relative Interior of a set \(C\) is denoted by \(\relint(C)\) and is defined as
   \begin{equation}
     \label{eq:relative-interior}
-    \relint(\mathcal{C}) = \{x \in \mathcal{C} | B_{r}(x) \cup \affhull(\mathcal{C}) \subseteq \mathcal{C}, \text{ for some } r \geq 0\}
+    \relint(C) = \{x \in C | B_{r}(x) \cup \affhull(C) \subseteq C, \text{ for some } r \geq 0\}
   \end{equation}
 \end{definition}
 
 \begin{definition}
   \label{def:relative-boundary}
-  The Relative boundary of a set \(\mathcal{C}\) is denoted by \(\relbound \mathcal{C}\) and is defined as
+  The Relative boundary of a set \(C\) is denoted by \(\relbound C\) and is defined as
   \begin{equation}
     \label{eq:relative-boundary}
-    \relbound \mathcal{C} = \clos(\mathcal{C}) \setminus \relint(\mathcal{C})
+    \relbound C = \clos(C) \setminus \relint(C)
   \end{equation}
-  where \(\clos(\mathcal{C})\) is the closure of \(\mathcal{C}\).
+  where \(\clos(C)\) is the closure of \(C\).
 \end{definition}
 
 \section{Experiments}
@@ -62,7 +102,7 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
       \(D_{train+test}\) that we run to get \(k_{l}\) learning curves,
       \(n_{sub}\) is threshold for subsampling and \(n_{val}\) is the size of the
       validation split.}
-    \State $\mat{L} \gets \mat{0}_{k, n}$ \Comment{\(k_l\) by \(n\) empty matrix for losses for timesteps \(t=1:n\) for folds \(i=1:k_l\)}
+    \State $\mat{L} \gets \mat{0}_{k_l, n}$ \Comment{\(k_l\) by \(n\) empty matrix for losses for timesteps \(t=1:n\) for folds \(i=1:k_l\)}
     \State $n_{D} \gets |D|$
     \If {$n_{D} > n_{sub}$} \Comment{If dataset too big, subsample}
     \State $D \gets \textrm{subsample}(D, n_{sub})$
@@ -95,13 +135,13 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
   \caption{Experimental procedure (Realisable)}
   \begin{algorithmic}[1]
     \Procedure{Experiment}{$D$, $\algo$, $\querstrat$, $\ell$, $k_{cv}$,
-      $k_{\ell}$, $n_{sub}$, $n_{val}$} \Comment{\(D\) is the dataset, \(\algo\)
+      $k_l$, $n_{sub}$, $n_{val}$} \Comment{\(D\) is the dataset, \(\algo\)
       is the algorithm, \(\querstrat\) is the querying strategy, \(k_{cv}\) is
       the number of folds in \(kCV\), \(k_{l}\) is the number of folds over
       \(D_{train+test}\) that we run to get \(k_{l}\) learning curves,
       \(n_{sub}\) is threshold for subsampling and \(n_{val}\) is the size of the
       validation split.}
-    \State $\mat{L} \gets \mat{0}_{k, n}$ \Comment{\(k_l\) by \(n\) empty matrix for losses for timesteps \(t=1:n\) for folds \(i=1:k_l\)}
+    \State $\mat{L} \gets \mat{0}_{k_l, n}$ \Comment{\(k_l\) by \(n\) empty matrix for losses for timesteps \(t=1:n\) for folds \(i=1:k_l\)}
     \State $n_{D} \gets |D|$
     \If {$n_{D} > n_{sub}$} \Comment{If dataset too big, subsample}
     \State $D \gets \textrm{subsample}(D, n_{sub})$
@@ -110,7 +150,7 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
     \State $\sigma_{opt}, \lambda_{opt} \gets kCV(D, \algo, k_{cv})$ \Comment{Get optimal hyperparameters through k-fold CV}
     \State $h_{realisable} = \algo(D)$ \Comment{Fit new hypothesis and create
       new labels}
-    \State $D \gets \{(x_i, h_{realisable}(x_i)\}_{i=1}^{n}$
+    \State $D \gets \{(x_i, h_{realisable}(x_i))\}_{i=1}^{n}$
     \State $S_{val} \gets D_{1:n_{val}}$
     \State $S_{train+test} \gets S_{n_{val}+1:n}$
     \State $\sigma'_{opt} \gets \frac{\sigma_{opt}}{\sqrt{2}}$ \Comment{Set \(\sigma_{opt}'\) according to \ref{cor:gauss-kernel-squared-gives-eta-zero}}
@@ -165,8 +205,8 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
     \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-white_wine.png}
     \caption{white wine}
   \end{subfigure}
-  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\) standard deviation over the 5 folds) for agnostic regression comparing FW (KH) with MC and
-    Levscore. The \(y\)-axis is MSE (Mean Squared Error), \(x\)-axis is \(t\)
+  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\) standard deviation over the 5 folds) for agnostic regression comparing FW-kh with MC and
+    LS-rand. The \(y\)-axis is MSE (Mean Squared Error), \(x\)-axis is \(t\)
     (number of datapoints in current active learning train set). A good
     algorithm will have a trajectory that goes down quickly with \(t\). MC is baseline.}
 \end{figure}
@@ -201,8 +241,9 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
     \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold_realisable-white_wine.png}
     \caption{white wine}
   \end{subfigure}
-  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\) standard deviation over the 5 folds) for regression comparing FW (KH) with MC and
-    Levscore. The \(y\)-axis is MSE (Mean Squared Error), \(x\)-axis is \(t\)
+  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\)
+    standard deviation over the 5 folds) for realisable regression comparing FW-kh with MC and
+    LS-rand. The \(y\)-axis is MSE (Mean Squared Error), \(x\)-axis is \(t\)
     (number of datapoints in current active learning train set). A good
     algorithm will have a trajectory that goes down quickly with \(t\). MC is baseline.}
 \end{figure}
@@ -220,8 +261,8 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
     \includegraphics[width=\textwidth]{../active_learning_code/reports/figures/learning_curves_k_fold-yeast.png}
     \caption{yeast}
   \end{subfigure}
-  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\) standard deviation over the 5 folds) for agnostic classification comparing FW (KH) with MC and
-    Levscore. The \(y\)-axis is Accuracy, \(x\)-axis is \(t\)
+  \caption{Learning curves (bold line is mean with shaded region being \(\pm 1\) standard deviation over the 5 folds) for agnostic classification comparing FW-kh with MC and
+    LS-rand. The \(y\)-axis is Accuracy, \(x\)-axis is \(t\)
     (number of datapoints in current active learning train set). A good
     algorithm will have a trajectory that goes up quickly with \(t\). MC is baseline.}
 \end{figure}
@@ -237,9 +278,9 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
   ]{../active_learning_code/reports/hyperparams/agnostic_regression_hyperparams.csv}
   \vspace{0.5cm}
   \caption{Table for Agnostic Regression containing dataset information and hyperparameters.
-    First column is the name of the dataset, \(n\) is the size, \(d\) the number of
+    The columns are the following: Dataset is the name of the dataset, \(n\) is the size, \(d\) the number of
     dimensions, \(\lambda_{opt}\) and \(\sigma_{opt}\) the hyperparameters chosen
-    for KRR using kCV}
+    for KRR using \(kCV\).}
 \end{table}
 
 \vspace{2cm}
@@ -252,9 +293,9 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
   ]{../active_learning_code/reports/hyperparams/realisable_regression_hyperparams.csv}
   \vspace{0.5cm}
   \caption{Table for Realisable Regression containing dataset information and hyperparameters.
-    First column is the name of the dataset, \(n\) is the size, \(d\) the number of
+    The columns are the following: Dataset is the name of the dataset, \(n\) is the size, \(d\) the number of
     dimensions, \(\lambda_{opt}\) and \(\sigma_{opt}\) the hyperparameters chosen
-    for KRR using kCV}
+    for KRR using \(kCV\).}
 \end{table}
 
 \vspace{2cm}
@@ -267,7 +308,7 @@ convergence of KH and FW. We will follow \cite{boyd04_convex}.
   ]{../active_learning_code/reports/hyperparams/agnostic_classification_hyperparams.csv}
   \vspace{0.5cm}
   \caption{Table for Agnostic Classification containing dataset information and hyperparameters.
-    First column is the name of the dataset, \(n\) is the size, \(d\) the number of
+    The columns are the following: Dataset is the name of the dataset, \(n\) is the size, \(d\) the number of
     dimensions, \(\lambda_{opt}\) and \(\sigma_{opt}\) the hyperparameters chosen
-    for KRR using kCV}
+    for KRR using \(kCV\).}
 \end{table}

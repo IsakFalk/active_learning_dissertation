@@ -1,18 +1,456 @@
 \chapter{Literature Review}
-\label{ch:lit_rev}
+\label{ch:lit-rev}
 
 In this chapter, we review and compile the work done on active learning for
-regression based on RKHS theory. We divide this into three parts: the first
-focusing on the theoretical foundation of RKHS theory, the second active
-learning theory and previous work using RKHS to do active learning for
-regression, and finally we give an overview of Kernel Herding (hereafter
-\textit{KH}) and its link to the Frank Wolfe (hereafter \textit{FW}) algorithm
-for optimising the maximum mean discrepancy efficiently.
+regression based on RKHS theory and give an introduction to RKHS theory and the
+Frank Wolfe convex optimisation algorithm.
+
+We divide this into three parts: the first is a comprehensive introduction and
+literature review on active learning and previous work using RKHS to do active
+learning for regression. We trace the history of active learning and introduce
+the necessary concepts of statistical learning theory and supervised learning,
+showing how active learning can be considered a generalisation of supervised
+learning. We map out the important results from the beginning of the field until
+today, giving specific focus to the setting of pool-based active learning which
+readily can be seen corresponding to supervised learning of traditional
+statistical learning theory. Finally we review the works done on active learning
+for regression with kernels, comparing and contrasting recent work and state of
+the art algorithms. From there we identify results upon which we build.
+
+The second part is a comprehensive overview of RKHS theory where we first
+justify the use of an RKHS space as the hypothesis space of active learning and
+the common advantages and disadvantages of this, highlighting that kernel
+methods often require an inversion of the kernel matrix which scales cubically
+with the number of datapoints, but that active learning sidestep this by keeping
+the number of datapoints needed low. We introduce traditional RKHS theory which
+states that an RKHS can be equivalently characterised as a Hilbert space where
+the evaluation functional being bounded, as a feature space and a reproducing
+kernel or implicitly by a positive definite function in the form of the kernel
+matrix. We then extend this to kernel mean embeddings and show how the maximum
+mean discrepancy can be used to devise a distance over measures, which enables
+us to capture a notion of how far the active learning train set is from the
+original sampled poolset.
+
+The third part shows how Kernel Herding is a way to efficiently subsample a
+dataset so that the subsampled dataset resembles the original dataset. In
+addition, we link to results that show how Kernel Herding can be seen as an
+algorithm which greedily chooses points according to the MMD distance between
+the current set of points chosen and the full dataset. Finally we show how
+Kernel Herding is an instance of a more general projection free algorithm called
+Frank Wolfe which gives guarantees on the rate of convergence of the maximum
+mean discrepancy superior to random sampling under mild regularity conditions.
+
+\section{Active Learning} We introduce the necessary concepts of \textit{active learning}
+by first introducing \textit{supervised learning} (hereafter \emph{SL}) under the
+\textit{statistical learning theory} (hereafter \emph{SLT}) model following the book
+\cite{shalev-shwartz14_under} and the notes from the learning theory part of the
+course in Advanced Topics in Machine Learning given at UCL 2019
+\cite{ciliberto18_advan_topic_machin_learn}. After this we review active
+learning as a field, looking at the historical developments and sub-divisions.
+We will then focus on the so called \emph{pool-based active learning}, showing
+how it relates to supervised learning and critically analyse the works using
+RKHS theory. We lean on the comprehensive active learning book of
+\cite{settles12_activ_learn}.
+
+\subsection{Statistical Learning Theory and Supervised Learning} SLT aims to
+introduce a framework grounded on probability theory that answers questions such as
+ \emph{what does it mean for an algorithm to learn} and \emph{How do we design
+   good learning algorithms} \cite[Lecture 1]{ciliberto18_advan_topic_machin_learn}.
+
+The SLT framework introduces the following concepts,
+
+\begin{description}
+\item[{Domain set}] An arbitrary set, \(\X\). The set of objects that we wish to
+find the output for. We also refer to this set as the \emph{input space} and
+call a point \(x \in \X\) an \emph{instance} or \emph{input}. We assume that
+\(\X \subseteq \R^{D}\) for some \(D \in \N\).
+\item[{Co-domain set}] An arbitrary set, \(\Y\). Our goal is to find a good
+mapping from \(\X\) to \(\Y\) in the sense that we should be able to predict the
+output in \(\Y\) for an arbitrary instance \(x \in \X\), hence why it's called
+the \emph{output space} or \emph{target space}, occasionally we will call \(y\)
+a \emph{label}. We will focus on regression, assuming that \(\Y \subseteq \R\).
+\item[{Train set}] \(S = \{(x_{i}, y_{i})\}_{i=1}^{n}\) is a finite set of
+pairs, where each pair \((x_{i}, y_{i}) \in \X \times \Y\)\footnote{Technically,
+\(S\) is a sequence as we allow duplicates, in practice this is not really a
+problem and we will keep using sets to refer to sequences of datapoints.}.
+\item[{Hypothesis space}] A space of functions \(\mathcal{H} \subseteq \{h : \X
+\to \Y, \: h \: \mathrm{measurable}\}\) meant to represent all of the possible
+input-output rules that we consider. Note that we have used \(\mathcal{H}\) for
+both an RKHS and hypothesis space, in practice this will not matter as we will
+always use an RKHS as the hypothesis space.
+\item[{Learning algorithm}] A function that takes as input a train set and maps
+  to a hypothesis space,
+  \begin{equation}
+    \label{eq:sl-algorithm}
+    \algo : \cup_{i=1}^{\infty} (\X \times \Y)^{n} \to \mathcal{H}.
+  \end{equation}
+\item[{Data generating distribution}] We assume there exists some distribution
+\(\rho\) with support on \(\X \times \Y\) such that \(\rho(x, y) = \rho(y |
+x)\rho_{\X}(x)\). The train set \(S = \{(x_{i}, y_{i})\}_{i=1}^{n}\) is sampled
+\(\iid\) from \(\rho\), that is, each pair \((x_{i}, y_{i}) \in S\) is sampled
+independently from \(\rho\) and we write \(S \sim \rho^{n}\). We do not have
+access to \(\rho\) directly, but only through \(S\).
+\item[{Measure of performance}] We choose a \emph{loss function}, \(\ell : \Y
+\times \Y \to \R_{+}\) that quantifies the loss of predicting \(\hat{y}\) when
+the output is \(y\) through \(\ell(y, y')\). In SLT we want to minimize
+the \emph{risk}, which is a function of an estimator \(h\),
+\begin{equation}
+\label{eq:def-risk} \risk{}{h} = \E_{\rho}[\ell(h(x), y)],
+\end{equation} and we will be writing \(\err{\rho}{h}\) to indicate the risk
+with respect to what measure.
+\end{description}
+
+The goal of SLT is to find an algorithm \(\algo\) that with high probability
+over the sampled train set \(S\) is close in performance to the optimal
+estimator in the hypothesis space. This is formalised by the concept of
+\emph{excess risk},
+\begin{definition}
+  \label{def:excess-risk} Given the above, we define the excess risk to be the
+quantity
+  \begin{equation}
+    \label{eq:excess-risk} \err{\rho}{h} - \err{\rho}{h^{\ast}},
+  \end{equation} where \(h^{\ast} \in \argmin_{h' \in \rkhs{H}}\err{\rho}{h'}\).
+\end{definition} The excess risk measures the additional risk that we take on by
+using \(h\) rather than the optimal estimator in the hypothesis space. In
+practice, the estimator \(h\) will be random since it will be the output of an
+algorithm \(\algo\), which maps from a train set \(S\) to \(h\)\footnote{When
+the function \(h\) is the output of an algorithm based on a train set \(S\) of
+size \(n\) we denote \(\hat{h}_{n} \coloneqq \algo(S)\). If the size of \(S\) is
+obvious we suppress the \(n\) and simply write \(\hat{h}\).}, making the excess
+risk itself random due to the random sampling of \(S \sim \rho^{n}\).
+
+In order to control the excess risk in probability, statements are made of the
+following form
+\begin{example}
+  \label{ex:pac-like-excess-risk} With probability larger than \(1 - \delta\)
+taken over the sampling of the train set \(S \sim \rho^n\), for any \(\delta \in
+[0, 1]\), we have that the excess risk is bounded,
+  \begin{equation*} \err{\rho}{\hat{h}_n} - \err{\rho}{h^{\ast}} \leq \epsilon
+  \end{equation*}
+\end{example} and these bounds are derived using error decomposition and
+controlling for the error in probabiliy using assumptions on the hypothesis
+class, data generating distribution etc. One famous example of this is Empirical
+Risk Minimization (hereafter \emph{ERM})\cite{vapnik92_princ} where the
+algorithm \(\algo\) is defined as the minimizer of the empirical risk, which in
+our setting reduces to the following definition,
+\begin{definition}
+  \label{def:erm} Given an input and an output space \(\X, \Y\), an RKHS
+\(\rkhs{H}\) acting as our hypothesis space, with loss \(\ell\) and a dataset
+\(S = \{(x_i, y_i)\}_{i=1}^n\), Empirical Risk Minimization is an algorithm
+  \begin{equation} \algo(S) = \argmin_{h \in \mathcal{H}} \frac{1}{n}
+\sum_{i=1}^n \ell(h(x_i), y_i).
+  \end{equation}
+\end{definition} In this work, we will focus on Regularised Empirical Risk
+Minimization (herafter \emph{RERM}) specialised to our setting,
+\begin{definition}
+  \label{def:rerm} Given input and output space \(\X, \Y\), an RKHS \(\rkhs{H}\)
+acting as our hypothesis space, with loss \(\ell\) and a dataset \(S = \{(x_i,
+y_i)\}_{i=1}^n\), Regularised Empirical Risk Minimization is an algorithm
+  \begin{equation} \algo(S) = \argmin_{h \in \mathcal{H}} \frac{1}{n}
+\sum_{i=1}^n \ell(h(x_i), y_i) + \lambda \norm{h}_{\rkhs{H}}^2.
+  \end{equation}
+\end{definition}
+
+Kernel Ridge Regression (hereafter \emph{KRR}) is a generalisation of Ridge
+Regression \cite{hoerl70_ridge_regres} where all of the inner products are
+lifted to the feature space through the use of a kernel function. KRR can be
+seen as the solution to the RERM when we have an RKHS \(\rkhs{H}\) and mean
+squared error \(\ell(y, y') = (y - y')^{2}\) with \(\X \subseteq \R^{D}\) and
+\(\Y \subseteq \R\), so that
+\begin{equation}
+  \label{eq:krr-rerm-form} \algo(S) = \argmin_{h \in \mathcal{H}}
+\frac{1}{n}\sum_{i=1}^n (h(x_i) - y_i)^2 + \lambda \norm{h}_{\rkhs{H}}^2.
+\end{equation}
+
+It can be shown that KRR has the following solution
+\begin{equation}
+\label{eq:krr-equation} \algo(S)(x) = \mat{k}_{x}^{T} \mat{\alpha}_{\ast} =
+\mat{k}_{x}^{T} (\mat{K}_{nn} + \lambda n \mat{I}_{n})^{-1}\mat{Y},
+\end{equation} where
+
+\begin{equation*}
+  \mat{K}_{nn} =
+  \begin{bmatrix}
+    K(x_{1}, x_{1}) & \dots & K(x_{1}, x_{n}) \\
+    \vdots & \ddots & \vdots \\
+    K(x_{n}, x_{1}) & \dots & K(x_{n}, x_{n})
+  \end{bmatrix}
+  , \mat{k}_{x} =
+  \begin{bmatrix}
+    K(x, x_{1}) \\ \vdots \\ K(x, x_{n})
+  \end{bmatrix}
+\end{equation*} and
+\begin{equation*}
+  \mat{Y} =
+  \begin{bmatrix}
+    y_1 \\ \vdots \\ y_n, 
+  \end{bmatrix}
+  .
+\end{equation*}
+
+We judge the quality of an algorithm with respect to its \emph{error bound}. An
+error bound gives us probabilistic guarantees on the magnitude of the excess
+risk as defined in \ref{def:excess-risk},
+\begin{definition}
+  \label{def:error-bound-sl} A supervised learning error bound \(\epsilon(n,
+\delta)\) is a function depending on an algorithm \(\algo\) that given a
+\(\delta \in [0, 1]\) assures that the excess risk will be less than
+\(\epsilon\) with probability greater than \(1 - \delta\). Or as a mathematical
+expression,
+  \begin{equation} \Pr_{S \sim \rho^n}(\err{}{\algo(S)} - \err{}{h^{\ast}} \leq
+\epsilon(n, \delta)) \geq 1 - \delta.
+  \end{equation}
+\end{definition}
+
+\subsection{Active Learning Theory Review} Active learning generalises the
+setting of supervised learning by introducing an aspect of cost to acquire
+labels of instances. According to Settles \cite[Preface]{settles12_activ_learn}
+\begin{quote}
+  Machine learning is the study of computer systems that improve through experience. Active learning
+  is the study of machine learning systems that improve by asking questions. So why ask questions?
+  (Good question.) The key hypothesis is that if the learner is allowed to choose the data from which
+  it learns — to be active, curious, or exploratory, if you will — it can perform better with less training.
+\end{quote}
+In the SL setting we are \emph{given} a train set \(S\) consisting
+of instance-output pairs sampled from \(\rho\). Compare this to a setting
+where we are only given a large set of \emph{instances} but attaining the
+outputs of instances is costly, it seems possible that we could attain an
+acceptable level of accuracy or risk by just asking for a few outputs rather
+than all of them. The latter example can be formalised as the setting of active
+learning and was hinted at in the \hyperref[sec:background]{Background} section.
+
+From literature there are proposed criteria for what a strategy for choosing
+instances to label should consider and allows us to classify algorithms
+according to how they implement each of these.
+\cite{wu18_pool_based_sequen_activ_learn_regres} argue that a strategy should
+take into account the \emph{informativeness}, \emph{representativeness} and
+\emph{diversity} of the instances chosen. This corresponds well with how the
+objective for choosing what instance to label often decompose into terms that
+can be interpreted as encouraging informative instances but discouraging instances similar to instances already labeled (for
+example \cite[Equation 4]{guo08_discr} and \cite[Equation
+7]{chattopadhyay13_batch_mode_activ_sampl_based}).
+
+It is possible to define an active learning algorithm by specifying an
+\emph{active learning tuple} \((\algo, \querstrat)\) where \(\algo\) is the
+algorithm of SL as defined in \ref{eq:sl-algorithm} and \(\querstrat\) is the strategy for how to choose instances
+to query. The various setting of active learning then depends on what we need
+\(\querstrat\) to do and according to what objective we want to have good
+performance on. This leads to the subsettings of active learning.
+
+Active learning can be split up into three subsettings, being \emph{query
+synthesis}, \emph{stream-based selective sampling} and \emph{pool-based active
+learning} \cite{settles12_activ_learn}. These can be further divided into
+sequential and batch-mode active learning where the first considers instances
+one-by-one while the second instead presents the learner with sets of instances
+\cite{guo08_discr}. The dominating stream of the two is that of sequential
+learning due to the simplicity of deriving results but also due to the
+combinatorial aspect of choosing subsets from a mother set leading to explosion
+in computational complexity unless using approximations. Furthermore, these
+approximations can sometimes be shown to be close-to-optimal.
+\cite{krause08_near_optim_sensor_placem_gauss_proces} shows that in an active
+learning setting where the goal is to optimally place sensors in predefined
+locations and casting this as a problem of maximising the mutual information
+between the sensor locations and the rest of the locations, there is a
+polynomial-time greedy procedure that is within \((1 - 1/e)\) of optimum of the
+NP-hard combinatorial objective problem. All this indicates that the
+batch-setting is underexplored as the benefits are small over sequential active
+learning.
+
+All active learning theory from here on will be considered in the sequential
+setting, and note that all batch-mode active learning can be rendered sequential
+by making the set of size 1. Active learning then operates in a loop where \(t\)
+is the time step at the start of the iteration, and the active learning
+algorithm gets an input to the querying strategy \(\querstrat\) after which
+\(\querstrat\) chooses what to do depending on the current setting, thereafter
+the algorithm is free to predict or do whatever needed for \(\querstrat\) to
+choose the next point at time \(t+1\). The reason for the flexibility is that in
+general the instance chosen at \(t+1\) may depend on the output and predicted
+output of the trained model up to time \(t\), that is the full history up until \(t\).
+
+\subsubsection{Query Synthesis} When the algorithm is allowed to synthesis
+instances \emph{de novo} so that the instance chosen by \(\querstrat\) at time
+\(t\) may be any point in \(\X\) we call this query synthesis, or learning with
+membership queries \cite{angluin88_queries_concep_learn}. One prominent issue
+with this is that we do not have access to \(\rho_{\X}\) at all and thus cannot
+hope to minimise any risk unless this is supposed to be known a-priori.
+
+\cite{cohn96_activ_learn_with_statis_model} does query synthesis by assuming
+that \(\rho_{\X}\) is uniform to make the problem tractable, learning the
+dynamics of an idealised robot arm. This can be a fruitful direction to take if
+the actual goal is about learning a concept in itself rather than aiming for low
+risk. However, there are failure cases when the instances are actually from some
+underlying distribution \(\rho_{\X}\), which is expanded upon in
+\cite{baum92_query} where they show that using humans to label synthesised
+images of mnist lead to strange artifacts as the algorithm does not take into
+account the fact that the true marginal distribution on image only has support
+for a small subspace of all possible images of digits. This makes it problematic
+since we are trying to reduce the risk and need access to samples from
+\(\rho_{\X}\) in order to learn about the marginal distribution.
+
+\subsubsection{Stream-Based Active Learning} This is also called selective sampling
+\cite{cohn94_improv_gener_with_activ_learn} due to the querying strategy
+deciding at each time step whether to query an instance, which arrive in an
+on-line fashion, or discard it and query a later instance. The assumption is
+that the source of the instances produce these virtually for free so cost only
+enters through querying. The example of learning a threshold concept in
+\hyperref[sec:background]{Background} can be cast in this setting, where we reject any instance
+shown to us to be less than the biggest instance currently labeled \(0\). In
+this way, the querying strategy is a function \(\querstrat: \X \to \{0, 1\}\)
+where \(0\) represents a decision to not label and \(1\) to label the currently
+streamed instance.
+
+Approaches of when to query often corresponds to the criteria of an instance
+being informative, representative and to add to the diversity of the already
+queried instances so far. The most straightforward approach is to define a
+measure of utility of information content and bias the sampling towards
+instances with high information content. A second approach is that of using a
+version space \cite{tong01_suppor_vector_machin_activ_learn}.
+
+This setting contains many theoretically grounded algorithms, for example
+\cite{dasgupta08}. They also point out some common problems with general active
+learning algorithms; they rely upon computations which are not feasible in
+practice or requires solving problems which are intractable in practice.
+
+\subsubsection{Pool-based Active Learning}
+When given a set of datapoints \(S \sim \rho^{n}\) we may assume that we know
+the instances and that the labels exist, but are hidden from us until we query
+them for the corresponding outputs. When the querying comes with a cost we want
+to only query as many instances as needed to reach some level of performance
+before stopping. This is the pool-based active learning setting \cite{lewis94}
+and it differs from query synthesis in that the query strategy \(\querstrat\)
+can only choose instances to query from \(S\) and at each time \(t\) the choice
+depends on the dataset \(S\) of which it only has access to the instances and
+labels from previously queried instances to pick which instance from \(S\) to
+query next.
+
+Pool-based active learning has a lot of overlap with the information retrieval
+and data mining communities, due to the straightforward representation of
+databases with instances such as documents as a pool of instances, which we call
+the \textit{pool set}, where labels need to be produced by human experts
+\cite{lewis94,tong01_suppor_vector_machin_activ_learn}. \cite{settles08} go into
+how various utility based ways to choose what instance to label. Most of these
+depend on the output of the current best hypothesis (or in the case of Query By
+Committee, a set of hypotheses), which we will see is unnecessary in the setting
+we will consider.
+
+One limitation of pool-based active learning is that if the pool of samples is
+big, the querying strategy theoretically need to calculate the utility of each
+instance and then pick the instance which maximises the utility. In practice,
+this is less of a concern as it's possible to approximate this scheme by for
+example first subsample a smaller unlabeled dataset and label the most
+informative instance in this. This poses a problem for us though, as unless we
+can show that making this approximation leads to guarantees in probability, it's
+not simple to see how this can be overcome.
+
+We now define the necessary components for pool-based active learning for
+regression. For a set of input-output pairs \(\poolset = \{(x_{i},
+y_{i})\}_{i=1}^{n}\) we denote the set of only instance as \(\poolsetx =
+\{x_{i}\}_{i=1}^{n}\). Pool-based active learning operates in a loop and we let
+\(t\) denote the current time-step, incremented at the end of each loop. We have
+the following
+
+\begin{description}
+\item[{Pool set}] A set of instance-output pairs sampled from \(\rho\) before
+the start of the active learning loop, denoted by \(\poolset_{0} = \{(x_{i},
+y_{i})\}_{i=1}^{n} \sim \rho^{n}\) and the corresponding set of only instances as
+\(\poolsetx_{0}\). The pool set acts as the pool of available instances that
+the algorithm can query at each \(t\), so that \(\poolsetx_{t}\) are the
+instances not labeled at start of iteration \(t\). At time \(t\) the algorithm
+only have access to \(\poolsetx_{t}\) and will ask for the label of an instance
+from \(\poolsetx_{t}\).
+\item[{Oracle}] The oracle is a function which takes as an input an instance and
+samples from the conditional distribution \(\rho(Y | X = x)\). We will assume no
+output noise in our setting, so the conditional distribution is
+deterministic. Formally we define \(\oracle: \X \to \Y\) where \(\oracle(x) =
+f(x)\) and \(f(x)\) is the true relationship.
+\item[{Querying strategy}] The strategy of how we decide what instance to label
+at time \(t\) which we denote \(\querstrat\). We will make the assumption that
+\(\querstrat\) chooses instances at \(t\) through a non-adaptive utility
+function\footnote{This simply means that the querying strategy is independent of
+the history of outputs from the queried instances.} \(\upsilon: \X \to \R\),
+which implicitly depends on the instances already queried although we omit this
+for notational ease, and that \(\querstrat\) chooses an instance \(x_{t} \in
+\argmax_{x \in \poolsetx_{t}} \nu(x)\). We call the chosen instance \(x^{q}_{t}\) and send it
+to the oracle to label giving us \(y^{q}_{t} = \oracle(x^{q}_{t})\).
+\item[{Train set}] This is the analogue of the train set used in supervised
+learning. We denote this by \(\trainset_{t}\) and the corresponding set of
+instances as \(\trainsetx_{t}\). The reason for including \(t\) as a subscript
+is that \(\trainset_{t}\) is not static but is grown by one input-output pair at
+the end of each iteration.
+\end{description}
+
+In this way a pool-based active learning algorithm is defined by a tuple
+\((\algo, \querstrat)\) where \(\algo\) has the same role as in supervised
+learning, outputting a hypothesis \(\hat{h}_{t}\) depending on the current train
+set \(S_{t}\), but which is now built depending on the querying strategy
+\(\querstrat\).
+\begin{algorithm}
+  \caption{Pool based active learning}\label{alg:active-learning}
+  \begin{algorithmic}[1] \Procedure{ActiveLearning}{$\poolset_{0}$, $\algo$,
+$\querstrat$} \State $\trainset_0 \gets \emptyset$ \State $n \gets
+|\poolset_{0}|$ \State $t \gets 1$ \While{$t \leq n$} \State $x^q_t \gets
+\querstrat(\poolsetx_{t})$ \State $y^q_t \gets \oracle(x^q_t)$ \State
+$\trainset_{t} \gets \trainset_{t-1} \cup \{(x^q_t, y^q_t)\}$ \State $\poolset_t
+\gets \poolset_{t-1} \setminus \{(x^q_t, y^q_t)\}$ \State $t \gets t + 1$ \EndWhile
+\EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+The performance of an active learning algorithm will be considered to be its
+\emph{error bound} which is defined similarly as in \ref{def:error-bound-sl},
+but we now also let this depend on the size of \(\trainset_{t}\) in addition to
+the size original pool set
+\begin{definition}
+  \label{def:error-bound-al} An active learning error bound \(\epsilon(n, t,
+\delta)\) is a function depending on an algorithm \(\algo\) and a querying
+strategy \(\querstrat\) that given a \(\delta \in [0, 1]\) assures that the
+excess risk will be less than \(\epsilon\) with probability greater than \(1 -
+\delta\). Or as a mathematical expression, let \(\trainset_{t}\) be the train
+set at the end of time \(t\),
+  \begin{equation}
+  \label{eq:error-bound-al} \Pr_{S \sim \rho^n}(\err{}{\algo(S_{t})} -
+\err{}{h^{\ast}} \leq \epsilon(n, t, \delta)) \geq 1 - \delta.
+  \end{equation}
+\end{definition} This gives us a way to compare active learning algorithms to
+each other, and note that this also gives us a way to compare supervised
+learning to active learning by specifying \((\algo, \querstrat)\) and comparing
+the active learning error bound \(\epsilon(n_{al}, t, \delta)\) to the
+supervised learning bound \(\epsilon(n_{sl}, \delta)\) where \(n_{al} =
+|\poolset_{0}|\) is the number of original samples in the pool and \(n_{sl} =
+|\trainset|\) is the number of samples in the train set of supervised learning.
+
+For active learning there has been several works based on generalisation bounds
+\cite{ganti12_upal,xu19_towar_effic_evaluat_risk_via_herdin,gu12_towar} but
+these are aimed at classification or graph-based prediction. For the setting of
+regression, where a normal choice is to consider square loss and Kernel Ridge
+Regresion there is recently some promising results of
+\cite{viering17_nuclear_discr_activ_learn} where they derive a bound of the form
+\begin{equation}
+\label{eq:viering-mmd-gen-bound} \err{\poolset_{0}}{h} \leq
+\err{\trainset_{t}}{h} + \MMD{\poolsetx_{0}}{\trainsetx_{t}}{} + \eta_{MMD},
+\end{equation}
+where \(\MMD{\poolsetx_{0}}{\trainsetx_{t}}{}\) is the maximum mean discrepancy
+between the empirical distributions of \(\poolsetx_{0}\) and \(\trainsetx_{t}\),
+and propose to base the querying strategy of optimising the MMD term. By making
+certain assumptions on the space for the MMD it can be shown that \(\eta_{MMD} =
+0\) and that the active learning bound decomposes into term which may be
+interpreted as the empirical fit and the drift of the instance set
+\(\trainsetx_{t}\) to the original set of instances \(\poolsetx_{0}\). This
+makes it very clear that active learning in this setting is closely related to
+domain adaptation and domain drift. \cite{cortes19_adapt_based_gener_discr} show
+other measures in addition to MMD which may be used to control this domain drift
+through upper bounding the empirical risk in similar ways, but MMD is an
+appealing choice since it has an analytical form and analysing it comes down to
+qualities of the kernel matrix.
+
+From a domain adaptation perspective, active learning under no noise is
+equivalent to the case of \emph{covariate shift}
+\cite{gretton09_covar_shift_by_kernel_mean_match}.
 
 \section{Reproducing Kernel Hilbert Space Theory}
 \label{sec:rkhs-theory}
 
-\subsection{A brief history of the what and the why of Reproducing Kernel
+\subsection{A Brief History of the What and the Why of Reproducing Kernel
 Hilbert Spaces}
 \label{sec:a-brief-hisory-RKHS} Kernels have a long history and the field was
 arguably started with the work of \cite{aronszajn50_theor_reprod_kernel}. Since
@@ -41,7 +479,7 @@ and giving us access to the tools therein.
 
 However, there are drawbacks of using kernels for learning. It is well-known
 that most kernel algorithms require inversion of the kernel matrix, including
-kernel ridge regression, which scales cubically in the number of datapoints
+Kernel Ridge Regression, which scales cubically in the number of datapoints
 \cite{saunders98_ridge_regres_learn_algor_dual_variab} making it prohibitively
 expensive except for small datasets. Luckily this goes very well with active
 learning since we are actually interested in making the size of the dataset
@@ -177,7 +615,7 @@ There are many different kernels that can be used and can be combined in various
 ways according to rules we won't go into here, yielding a sort of calculus of
 kernels. We will only consider the so called Gaussian kernel,
 \begin{definition}
-  \label{def:gaussian-kernel} Let \(\X \subseteq \R^d\) for some \(d > 0\), the
+  \label{def:gaussian-kernel} Let \(\X \subseteq \R^D\) for some \(D > 0\), the
 gaussian kernel \(K_{\sigma} : \X \times \X \to \R\) has the form of
   \begin{equation}
     \label{eq:gaussian-kernel} K_{\sigma}(x, x') = \exp(-\frac{\norm{x -
@@ -189,15 +627,15 @@ The Gaussian kernel is ubiqituos in machine learning and other fields which use
 RKHS's, in particular it has the following properties
 \begin{theorem}
   \label{th:gaussian-kernel-properties} For any \(\sigma > 0\), the Gaussian
-kernel is
+  kernel on a compact domain \(\X \subseteq \R^D\) is
   \begin{itemize}
-  \item Characteristic
   \item Universal
+  \item Characteristic
   \item Stationary
-  \end{itemize} .
+  \end{itemize}
 \end{theorem}
 
-\subsection{Kernel Mean Embedding} Kernel Mean Embedding (hereafter \emph{KME})
+\subsection{Kernel Mean Embedding} Kernel mean embedding (hereafter \emph{KME})
 generalises the reproducer for \(x \in \X\), \(K_{x}\), to that of a
 distribution \(\rho \in \prob(\X)\). We will follow the review of
 \cite{muandet17_kernel_mean_embed_distr} and the notes of
@@ -252,23 +690,23 @@ for any \(\rho \in \prob(\X)\), \(\mu_{\rho} \in \rkhs{H}\).
 \end{proof}
 
 We finish by considering the KME of the empirical distribution of a dataset. Let
-\(S = (x_{i})_{i=1}^{n}\) be a sequence of \(n\) datapoints from some set
-\(\X\), then the empirical distribution of \(S\), call this \(\rho_{S}\), is
+\(X = \{x_{i}\}_{i=1}^{n}\) be a set of \(n\) datapoints from some set
+\(\X\), then the empirical distribution of \(X\), call this \(\rho_{X}\), is
 defined to be
 \begin{equation}
-\label{eq:empirical-distribution} \rho_{S} = \frac{1}{n}\sum_{i=1}^{n}
-\delta_{x_{i}}
-\end{equation} and the corresponding mean embedding is \(\mu_{\rho_{S}} =
-\int_{S} K_{x} \dd \rho_{S} = \frac{1}{n} \sum_{i=1}^{n}K_{x_{i}}\). If \(S\) is
-the set of \(n\) samples sampled \(\iid\) from some distribution \(\rho\), then
+  \label{eq:empirical-distribution}
+  \rho_{X} = \frac{1}{n}\sum_{i=1}^{n} \delta_{x_{i}}
+\end{equation} and the corresponding mean embedding is \(\mu_{\rho_{X}} =
+\int_{\X} K_{x} \dd \rho_{X} = \frac{1}{n} \sum_{i=1}^{n}K_{x_{i}}\). If \(X\) is
+a set of \(n\) samples sampled \(\iid\) from some distribution \(\rho\), then
 we say
 \begin{equation}
 \label{eq:empirical-kernel-mean-embedding} \hat{\mu}_{\rho} \coloneqq
-\mu_{\rho_{S}}
+\mu_{\rho_{X}}
 \end{equation} as it is an \emph{empirical estimate} of the mean embedding
 \(\mu_{\rho}\).
 
-\subsection{Maximum Mean Discrepancy} Integral Probability Metrics (hereafter
+\subsection{Maximum Mean Discrepancy} Integral probability metrics (hereafter
 \emph{IPM}) \cite{mueller97_integ_probab_metric_their_gener_class_funct} are
 distance-like functions defined in the following way
 \begin{definition}
@@ -282,8 +720,8 @@ functions on a non-empty set \(\X\). Given two probability measures \(\rho,
 \end{definition}
 
 Any space \(\Fc\) defines an IPM, we will only consider the case when \(\Fc\) is
-a unit ball in an RKHS, in which case we call this metric the Maximum Mean
-Discrepancy (hereafter \emph{MMD}). It's simple to show that in this case the
+a unit ball in an RKHS, in which case we call this metric the maximum mean
+discrepancy (hereafter \emph{MMD}). It's simple to show that in this case the
 MMD takes the following simple form,
 \begin{theorem}
 \label{th:mmd-is-norm-between-feature-maps} Let \(B\) be the unit ball of an
@@ -323,394 +761,11 @@ When the kernel is characteristic, the MMD is a true metric
 characteristic kernel, MMD is a metric on distributions in \(\prob(\X)\).
 \end{theorem}
 
-\section{Active Learning} We introduce the necessary concepts of Active Learning
-by first introducing Supervised Learning (hereafter \emph{SL}) under the
-Statistical Learning Theory (hereafter \emph{SLT}) model following the book
-\cite{shalev-shwartz14_under} and the notes from the Learning Theory part of the
-course in Advanced Topics in Machine Learning given at UCL 2019
-\cite{ciliberto18_advan_topic_machin_learn}. After this we review active
-learning as a field, looking at the historical developments and sub-divisions.
-We will then focus on the so called \emph{pool-based active learning}, showing
-how it relates to supervised learning and critically analyse the works using
-RKHS theory. We lean on the comprehensive introduction of
-\cite{settles12_activ_learn}.
-
-\subsection{Statistical Learning Theory and Supervised Learning} SLT aims to
-introduce a framework grounded on probability theory that answers such questions
-as \emph{what does it mean for an algorithm to learn} and \emph{How do we design
-good learning algorithms} \cite[Lecture
-1]{ciliberto18_advan_topic_machin_learn}.
-
-The SLT framework introduces the following concepts,
-
-\begin{description}
-\item[{Domain set}] An arbitrary set, \(\X\). The set of objects that we wish to
-find the output for. We also refer to this set as the \emph{input space} and
-call a point \(x \in \X\) an \emph{instance} or \emph{input}. We assume that
-\(\X \subseteq \R^{D}\) for some \(D \in \N\).
-\item[{Co-domain set}] An arbitrary set, \(\Y\). Our goal is to find a good
-mapping from \(\X\) to \(\Y\) in the sense that we should be able to predict the
-output in \(\Y\) for an arbitrary instance \(x \in \X\), hence why it's called
-the \emph{output space} or \emph{target space}, occasionally we will call \(y\)
-a \emph{label}. We will focus on regression, assuming that \(\Y \subseteq \R\).
-\item[{Train set}] \(S = (x_{i}, y_{i})_{i=1}^{n}\) is a finite sequence of
-pair, where each pair \((x_{i}, y_{i}) \in \X \times \Y\).
-\item[{Hypothesis space}] A space of functions \(\mathcal{H} \subseteq \{h : \X
-\to \Y, \: h \: \mathrm{measurable}\}\) meant to represent all of the possible
-input-output rules that we consider. Note that we have used \(\mathcal{H}\) for
-both an RKHS and hypothesis space, in practice this doesn't matter as we will
-always use an RKHS as the hypothesis space.
-\item[{Learning algorithm}] A function that takes as input a train set and maps
-  to a hypothesis space,
-  \begin{equation}
-    \label{eq:sl-algorithm}
-    \algo : \cup_{i=1}^{\infty} (\X \times \Y)^{n} \to \mathcal{H}.
-  \end{equation}
-\item[{Data generating distribution}] We assume there exists some distribution
-\(\rho\) with support on \(\X \times \Y\) such that \(\rho(x, y) = \rho(y |
-x)\rho_{\X}(x)\). The train set \(S = (x_{i}, y_{i})_{i=1}^{n}\) is sampled
-\(\iid\) from \(\rho\), that is, each pair \((x_{i}, y_{i}) \in S\) is sampled
-independently from \(\rho\) and we write \(S \sim \rho^{n}\). We do not have
-access to \(\rho\) directly, but only through \(S\).
-\item[{Measure of performance}] We choose a \emph{loss function}, \(\ell : \Y
-\times \Y \to \R_{+}\) that quantifies the loss of predicting \(\hat{y}\) when
-the output is \(y\) through \(\ell(y, y')\). The goal of SLT is then to minimize
-the \emph{risk}, which is a function of an estimator \(h\),
-\begin{equation}
-\label{eq:def-risk} \risk{}{h} = \E_{\rho}[\ell(h(x), y)],
-\end{equation} and we will be writing \(\err{\rho}{h}\) to indicate the risk
-with respect to what measure.
-\end{description}
-
-The goal of SLT is to find an algorithm \(\algo\) that with high probability
-over the sampled train set \(S\) is close in performance to the optimal
-estimator in the hypothesis space. This is formalised by the concept of
-\emph{excess risk},
-\begin{definition}
-  \label{def:excess-risk} Given the above, we define the excess risk to be the
-quantity
-  \begin{equation}
-    \label{eq:excess-risk} \err{\rho}{h} - \err{\rho}{h^{\ast}},
-  \end{equation} where \(h^{\ast} \in \argmin_{h' \in \rkhs{H}}\err{\rho}{h'}\).
-\end{definition} The excess risk measures the additional risk that we take on by
-using \(h\) rather than the optimal estimator in the hypothesis space. In
-practice, the estimator \(h\) will be random since it will be the output of an
-algorithm \(\algo\), which maps from a train set \(S\) to \(h\)\footnote{When
-the function \(h\) is the output of an algorithm based on a train set \(S\) of
-size \(n\) we denote \(\hat{h}_{n} \coloneqq \algo(S)\). If the size of \(S\) is
-obvious we suppress the \(n\) and simply write \(\hat{h}\).}, making the excess
-risk itself random due to the random sampling of \(S \sim \rho^{n}\).
-
-In order to control the excess risk in probability, statements are made of the
-following form
-\begin{example}
-  \label{ex:pac-like-excess-risk} With probability larger than \(1 - \delta\)
-taken over the sampling of the train set \(S \sim \rho^n\), for any \(\delta \in
-[0, 1]\), we have that the excess risk is bounded,
-  \begin{equation*} \err{\rho}{\hat{h}_n} - \err{\rho}{h^{\ast}} \leq \epsilon
-  \end{equation*}
-\end{example} and these bounds are derived using error decomposition and
-controlling for the error in probabiliy using assumptions on the hypothesis
-class, data generating distribution etc. One famous example of this is Empirical
-Risk Minimization (hereafter \emph{ERM})\cite{vapnik92_princ} where the
-algorithm \(\algo\) is defined as the minimizer of the empirical risk, which in
-our setting reduces to the following definition,
-\begin{definition}
-  \label{def:erm} Given an input and an output space \(\X, \Y\), an RKHS
-\(\rkhs{H}\) acting as our hypothesis space, with loss \(\ell\) and a dataset
-\(S = (x_i, y_i)_{i=1}^n\), Empirical Risk Minimization is an algorithm
-  \begin{equation} \algo(S) = \argmin_{h \in \mathcal{H}} \frac{1}{n}
-\sum_{i=1}^n \ell(h(x_i), y_i).
-  \end{equation}
-\end{definition} In this work, we will focus on Regularised Empirical Risk
-Minimization (herafter \emph{RERM}) specialised to our setting,
-\begin{definition}
-  \label{def:rerm} Given input and output space \(\X, \Y\), an RKHS \(\rkhs{H}\)
-acting as our hypothesis space, with loss \(\ell\) and a dataset \(S = (x_i,
-y_i)_{i=1}^n\), Regularised Empirical Risk Minimization is an algorithm
-  \begin{equation} \algo(S) = \argmin_{h \in \mathcal{H}} \frac{1}{n}
-\sum_{i=1}^n \ell(h(x_i), y_i) + \lambda \norm{h}_{\rkhs{H}}^2.
-  \end{equation}
-\end{definition}
-
-Kernel Ridge Regression (hereafter \emph{KRR}) is a generalisation of Ridge
-Regression \cite{hoerl70_ridge_regres} where all of the inner products are
-lifted to the feature space through the use of the kernel function. KRR can be
-seen as the solution to the RERM when we have an RKHS \(\rkhs{H}\) and mean
-squared error \(\ell(y, y') = (y - y')^{2}\) with \(\X \subseteq \R^{D}\) and
-\(\Y \subseteq \R\), so that
-\begin{equation}
-  \label{eq:krr-rerm-form} \algo(S) = \argmin_{h \in \mathcal{H}}
-\frac{1}{n}\sum_{i=1}^n (h(x_i) - y_i)^2 + \lambda \norm{h}_{\rkhs{H}}^2.
-\end{equation}
-
-It can be shown that KRR has the following solution
-\begin{equation}
-\label{eq:krr-equation} \algo(S)(x) = \mat{k}_{x}^{T} \mat{\alpha}_{\ast} =
-\mat{k}_{x}^{T} (\mat{K}_{nn} + \lambda n \mat{I}_{n})^{-1}\mat{Y},
-\end{equation} where
-\begin{equation}
-\label{eq:k-one-x} \mat{k}_{x} =
-\begin{bmatrix} K(x, x_{1}) \\ \vdots \\ K(x, x_{n}), 
-\end{bmatrix}
-\end{equation} and
-\begin{equation}
-  \label{eq:y-mat} \mat{Y} =
-  \begin{bmatrix} y_1 \\ \vdots \\ y_n, 
-  \end{bmatrix}
-\end{equation}
-.
-
-We judge the quality of an algorithm with respect to its \emph{error bound}. An
-error bound gives us probabilistic guarantees on the magnitude of the excess
-risk as defined in \ref{def:excess-risk},
-\begin{definition}
-  \label{def:error-bound-sl} A supervised learning error bound \(\epsilon(n,
-\delta)\) is a function depending on an algorithm \(\algo\) that given a
-\(\delta \in [0, 1]\) assures that the excess risk will be less than
-\(\epsilon\) with probability greater than \(1 - \delta\). Or as a mathematical
-expression,
-  \begin{equation} \Pr_{S \sim \rho^n}(\err{}{\algo(S)} - \err{}{h^{\ast}} \leq
-\epsilon(n, \delta)) \geq 1 - \delta.
-  \end{equation}
-\end{definition}
-
-\subsection{Active Learning Theory Review} Active learning generalises the
-setting of supervised learning by introducing an aspect of cost to acquire
-labels of instances. According to Settles
-\begin{quote} Active learning is any form of learning in which the learning
-program has some control over the inputs on which it trains
-\cite{settles12_activ_learn}.
-\end{quote} In the SL setting we are \emph{given} a train set \(S\) consisting
-of instance and output-pairs sampled from \(\rho\). Compare this to a setting
-where we are only given a large set of \emph{instances} but attaining the
-outputs of an instances is costly, it seems possible that we could attain an
-acceptable level of accuracy or risk by just asking for a few outputs rather
-than all of them. The latter example can be formalised as the setting of Active
-Learning and was hinted at in the \hyperref[sec:background]{Background} section.
-
-From literature there are proposed criteria for what a strategy for choosing
-instances to label should consider and allows us to classify algorithms
-according to how they implement each of these.
-\cite{wu18_pool_based_sequen_activ_learn_regres} argue that a strategy should
-take into account the \emph{informativeness}, \emph{representativeness} and
-\emph{diversity} of the instances chosen. This corresponds well with how the
-objective for choosing what instance to label often decompose into terms that
-can be interpreted as encouraging informative instances but discouraging instances similar to instances already labeled (for
-example \cite[Equation 4]{guo08_discr} and \cite[Equation
-7]{chattopadhyay13_batch_mode_activ_sampl_based}).
-
-It is possible to define an active learning algorithm by specifying an
-\emph{active learning tuple} \((\algo, \querstrat)\) where \(\algo\) is the
-algorithm of SL as defined in \ref{eq:sl-algorithm} and \(\querstrat\) is the strategy for how to choose instances
-to query. The various setting of active learning then depends on what we need
-\(\querstrat\) to do and according to what objective we want to have good
-performance on. This leads to the subsettings of active learning.
-
-Active learning can be split up into three subsettings, being \emph{Query
-Synthesis}, \emph{Stream-Based Selective Sampling} and \emph{Pool-based Active
-Learning} \cite{settles12_activ_learn}. These can be further divided into
-sequential and batch-mode active learning where the first considers instances
-one-by-one while the second instead presents the learner with sets of instances
-\cite{guo08_discr}. The dominating stream of the two is that of sequential
-learning due to the simplicity of deriving results but also due to the
-combinatorial aspect of choosing subsets from a mother set leading to explosion
-in computational complexity unless using approximations. Furthermore, these
-approximations can sometimes be shown to be close-to-optimal.
-\cite{krause08_near_optim_sensor_placem_gauss_proces} shows that in an active
-learning setting where the goal is to optimally place sensors in predefined
-locations and casting this as a problem of maximising the Mutual Information
-between the sensor locations and the rest of the locations, there is a
-polynomial-time greedy procedure that is within \((1 - 1/e)\) of optimum of the
-NP-hard combinatorial objective problem. All this indicates that the
-batch-setting is underexplored as the benefits are small over sequential active
-learning.
-
-All active learning theory from here on will be considered in the sequential
-setting, and note that all batch-mode active learning can be rendered sequential
-by making the set of size 1. Active learning then operates in a loop where \(t\)
-is the time step at the start of the iteration, and the active learning
-algorithm gets an input to the querying strategy \(\querstrat\) after which
-\(\querstrat\) chooses what to do depending on the current setting, thereafter
-the algorithm is free to predict or do whatever needed for \(\querstrat\) to
-choose the next point at time \(t+1\). The reason for the flexibility is that in
-general the instance chosen at \(t+1\) may depend on the output and predicted
-output of the trained model up to time \(t\), that is the full history up until \(t\).
-
-\subsection{Query synthesis} When the algorithm is allowed to synthesis
-instances \emph{de novo} so that the instance chosen by \(\querstrat\) at time
-\(t\) may be any point in \(\X\) we call this query synthesis, or learning with
-membership queries \cite{angluin88_queries_concep_learn}. One prominent issue
-with this is that we do not have access to \(\rho_{\X}\) at all and thus cannot
-hope to minimise any risk unless this is supposed to be known a-priori.
-
-\cite{cohn96_activ_learn_with_statis_model} does query synthesis by assuming
-that \(\rho_{\X}\) is uniform to make the problem tractable, learning the
-dynamics of an idealised robot arm. This can be a fruitful direction to take if
-the actual goal is about learning a concept in itself rather than aiming for low
-risk. However, there are failure cases when the instances are actually from some
-underlying distribution \(\rho_{\X}\), which is expanded upon in
-\cite{baum92_query} where they show that using humans to label synthesised
-images of MNIST lead to strange artifacts as the algorithm does not take into
-account the fact that the true marginal distribution on image only has support
-for a small subspace of all possible images of digits. This makes it problematic
-since we are trying to reduce the risk and need access to samples from
-\(\rho_{\X}\) in order to learn about the marginal distribution.
-
-\subsection{Stream-Based active learning} This is also called selective sampling
-\cite{cohn94_improv_gener_with_activ_learn} due to the querying strategy
-deciding at each time step whether to query an instance, which arrive in an
-on-line fashion, or discard it and query a later instance. The assumption is
-that the source of the instances produce these virtually for free so cost only
-enters through querying. The example of learning a threshold concept in
-\hyperref[sec:background]{Background} can be cast in this setting, where we reject any instance
-shown to us to be less than the biggest instance currently labeled \(0\). In
-this way, the querying strategy is a function \(\querstrat: \X \to \{0, 1\}\)
-where \(0\) represents a decision to not label and \(1\) to label the current
-instance streamed.
-
-Approaches of when to query often corresponds to the criteria of an instance
-being informative, representative and to add to the diversity of the already
-queried instances so far. The most straightforward approach is to define a
-measure of utility of information content and bias the sampling towards
-instances with high information content. A second approach is that of using a
-version space \cite{tong01_suppor_vector_machin_activ_learn}.
-
-This setting contains many theoretically grounded algorithms, for example
-\cite{dasgupta08}. They also point out some common problems with general active
-learning algorithms; they rely upon computations which are not feasible in
-practice or requires solving problems which are intractable in practice.
-
-\subsection{Pool-based active learning} When given a set of datapoints \(S \sim
-\rho^{n}\) we may assume that we know the instances and that the labels exist,
-but are hidden from us until we query them for the corresponding outputs. When
-the querying comes with a cost we want to only query as many instances as needed
-to reach some level of performance before stopping. This is the pool-based
-active learning setting \cite{lewis94} and it differs from query synthesis in
-that the query strategy \(\querstrat\) depends on the dataset \(S\) of which it
-only has access to the instances and labels from previously queried instances to
-pick which instance to query next.
-
-Pool-based active learning has a lot of overlap with the information retrieval
-and data mining communities, due to the straightforward representation of
-databases with instances such as documents as a pool set where labels need to be
-produced by human experts
-\cite{lewis94,tong01_suppor_vector_machin_activ_learn}. \cite{settles08} go into
-how various utility based ways to choose what instance to label. Most of these
-depend on the output of the current best hypothesis (or in the case of Query By
-Committee, a set of hypotheses), which we will see is unnecessary in the setting
-we will consider.
-
-One limitation of pool-based active learning is that if the pool of samples is
-big, the querying strategy theoretically need to calculate the utility of each
-instance and then pick the instance which maximises the utility. In practice,
-this is less of a concern as it's possible to approximate this scheme by for
-example first subsample a smaller unlabeled dataset and label the most
-informative instance in this. This poses a problem for us though, as unless we
-can show that making this approximation leads to guarantees in probability, it's
-not simple to see how this can be overcome.
-
-We now define the necessary components for Pool-based active learning for
-regression. For a set of input-output pairs \(\poolset = (x_{i},
-y_{i})_{i=1}^{n}\) we denote the set of only instance as \(\poolsetx =
-(x_{i})_{i=1}^{n}\). Pool-based active learning operates in a loop and we let
-\(t\) denote the current time-step, incremented at the end of each loop. We have
-the following
-
-\begin{description}
-\item[{Pool set}] A set of instance-output pairs sampled from \(\rho\) before
-the start of the active learning loop, denoted by \(\poolset_{0} = (x_{i},
-y_{i})_{i=1}^{n} \sim \rho^{n}\) and the corresponding set of only instances as
-\(\poolsetx_{0}\). The pool set acts as the pool of available instances that
-the algorithm can query at each \(t\), so that \(\poolsetx_{t}\) are the
-instances not labeled at start of iteration \(t\). At time \(t\) the algorithm
-only have access to \(\poolsetx_{t}\) and will ask for labels of an instance
-from \(\poolsetx_{t}\).
-\item[{Oracle}] The oracle is a function which takes as an input an instance and
-samples from the conditional distribution \(\rho(Y | X = x)\). We will assume no
-output noise in our derivation, so the conditional distribution is
-deterministic. Formally we define \(\oracle: \X \to \Y\) where \(\oracle(x) =
-f(x)\) where \(f(x)\) is the true relationship.
-\item[{Querying strategy}] The strategy of how we decide what instance to label
-at time \(t\) which we denote \(\querstrat\). We will make the assumption that
-\(\querstrat\) chooses instances at \(t\) through a non-adaptive utility
-function\footnote{This simply means that the querying strategy is independent of
-the history of outputs from the queried instances.} \(\upsilon: \X \to \R\),
-which implicitly depends on the instances already queried although we omit this
-for notational ease, and that \(\querstrat\) chooses an instance \(x_{t} \in
-\argmax_{x \in \poolsetx_{t}} \nu(x)\). We call the chosen instance \(x^{q}_{t}\) and send it
-to the oracle to label giving us \(y^{q}_{t} = \oracle(x^{q}_{t})\).
-\item[{Train set}] This is the analogue of the train set used in supervised
-learning. We denote this by \(\trainset_{t}\) and the corresponding set of
-instances as \(\trainsetx_{t}\). The reason for including \(t\) as a subscript
-is that \(\trainset_{t}\) is not static but is grown by one input-output pair at
-the end of each iteration.
-\end{description}
-
-In this way a pool-based active learning algorithm is defined by a tuple
-\((\algo, \querstrat)\) where \(\algo\) has the same role as in supervised
-learning, outputting a hypothesis \(\hat{h}_{t}\) depending on the current train
-set \(S_{t}\), but which is now built depending on the querying strategy
-\(\querstrat\).
-\begin{algorithm}
-  \caption{Pool based active learning}\label{alg:active-learning}
-  \begin{algorithmic}[1] \Procedure{ActiveLearning}{$\poolset_{0}$, $\algo$,
-$\querstrat$} \State $\trainset_0 \gets \emptyset$ \State $n \gets
-|\poolset_{0}|$ \State $t \gets 1$ \While{$t \leq n$} \State $x^q_t \gets
-\querstrat(\poolsetx_{t})$ \State $y^q_t \gets \oracle(x^q_t)$ \State
-$\trainset_{t} \gets \trainset_{t-1} \cup \{(x^q_t, y^q_t)\}$ \State $\poolset_t
-\gets \poolset_t \setminus \{(x^q_t, y^q_t)\}$ \State $t \gets t + 1$ \EndWhile
-\EndProcedure
-  \end{algorithmic}
-\end{algorithm}
-
-The performance of an active learning algorithm will be considered to be its
-\emph{error bound} which is defined similarly as in \ref{def:error-bound-sl},
-but we now also let this depend on the size of \(\trainset_{t}\) in addition to
-the size original pool set
-\begin{definition}
-  \label{def:error-bound-al} An active learning error bound \(\epsilon(n, t,
-\delta)\) is a function depending on an algorithm \(\algo\) and a querying
-strategy \(\querstrat\) that given a \(\delta \in [0, 1]\) assures that the
-excess risk will be less than \(\epsilon\) with probability greater than \(1 -
-\delta\). Or as a mathematical expression, let \(\trainset_{t}\) be the train
-set at the end of time \(t\),
-  \begin{equation}
-  \label{eq:error-bound-al} \Pr_{S \sim \rho^n}(\err{}{\algo(S_{t})} -
-\err{}{h^{\ast}} \leq \epsilon(n, t, \delta)) \geq 1 - \delta.
-  \end{equation}
-\end{definition} This gives us a way to compare active learning algorithms to
-each other, and note that this also gives us a way to compare supervised
-learning to active learning by specifying \((\algo, \querstrat)\) and comparing
-the active learning error bound \(\epsilon(n_{al}, t, \delta)\) to the
-supervised learning bound \(\epsilon(n_{sl}, \delta)\) where \(n_{al} =
-|\poolset_{0}|\) is the number of original samples in the pool and \(n_{sl} =
-|\trainset|\) is the number of samples in the train set of supervised learning.
-
-For active learning there has been several works based on generalisation bounds
-\cite{ganti12_upal,xu19_towar_effic_evaluat_risk_via_herdin,gu12_towar} but
-these are aimed at classification or graph-based prediction. For the setting of
-regression, where a normal choice is to consider square loss and kernel ridge
-regresion there is recently some promising results of
-\cite{viering17_nuclear_discr_activ_learn} where they derive a bound of the form
-\begin{equation}
-\label{eq:viering-mmd-gen-bound} \err{\poolset_{0}}{h} \leq
-\err{\trainset_{t}}{h} + \MMD{\poolsetx_{0}}{\trainsetx_{t}}{} + \eta_{MMD}
-\end{equation} and propose to base the querying strategy of optimising the MMD
-term. By making certain assumptions on the space for the MMD it can be shown
-that \(\eta_{MMD} = 0\) and that the active learning bound decomposes into term
-which may be interpreted as the empirical fit and the drift from the instance
-set \(\trainsetx_{t}\) to the original set of instances \(\poolsetx_{0}\). This
-makes it very clear that active learning in this setting is closely related to
-domain adaptation and domain drift. \cite{cortes19_adapt_based_gener_discr} show
-other measures in addition to MMD which may be used to control this domain drift
-through upper bounding the empirical risk in similar ways, but MMD is an
-appealing choice since it has an analytical form and analysing it comes down to
-qualities of the kernel matrix.
-
-From a domain adaptation perspective, active learning under no noise is
-equivalent to the case of \emph{covariate shift}
-\cite{gretton09_covar_shift_by_kernel_mean_match}.
+In order to ease notation we will use the following shorthand, if \(X =
+\{x_i\}_{i=1}^n\) and \(\rho\) is any probability distribution, then for any
+functional space \(\Fc\), \(\MMD{X}{\rho}{\Fc} =
+\MMD{\rho_X}{\rho}{\Fc}\), where \(\rho_X\) is the empirical measure
+on \(X\).
 
 \section{Herding and Conditional Gradient Methods in RKHS's}
 \subsection{Kernel Herding}
@@ -725,7 +780,8 @@ solved efficiently. While they consider classification, since the algorithm is
 non-adaptive and based on controlling the same MMD term as in
 \ref{eq:viering-mmd-gen-bound} it is directly comparable to what we are trying
 to do. We will insted consider optimising this term through the use of
-Frank-Wolfe \cite{frank56_algor_quadr_progr,jaggi13_revis_frank_wolfe} of which
+Frank Wolfe \cite{frank56_algor_quadr_progr,jaggi13_revis_frank_wolfe}
+(hereafter \textit{FW}) of which
 herding can be shown to be a special case
 \cite{bach12_equiv_between_herdin_condit_gradien_algor}.
 
@@ -737,79 +793,86 @@ generalised to arbitrary domains \(\X\) by
 \cite{chen12_super_sampl_from_kernel_herdin} noting that we can let \(\mat{w}\),
 the parameters of the model, be an element of a \textbf{finite-dimensional} RKHS
 \(\rkhs{H}\) with \(\phi\) being the feature map of the corresponding
-reproducing kernel \(K\). Given a probability distribution \(\rho_{\X}\) on
-\(\X\), kernel herding is the following
+reproducing kernel \(K\).
 \begin{algorithm}
   \caption{KernelHerding}\label{alg:kernel-herding}
-  \begin{algorithmic}[1] \Procedure{KernelHerding}{$\rkhs{H}$, $\rho_{\X}$,
+  \begin{algorithmic}[1]
+    \Procedure{KernelHerding}{$\rkhs{H}$, $\rho_{\X}$,
 $\mat{w}_{0} \in \rkhs{H}$} \State $\mu_{\rho_{\X}} = \E_{X \sim
 \rho_{\X}}[\phi(X)]$ \State $t \gets 1$ \While{$t < \infty$} \State $x_{t} \gets
 \argmax_{x \in \X} \scal{\mat{w}_{t-1}}{\phi(x)}_{\rkhs{H}}$ \State $\mat{w}_{t}
-\gets \mat{w}_{t-1} + \hat{\mu} - \phi(x_{t})$ \State $t \gets t + 1$ \EndWhile
+\gets \mat{w}_{t-1} + \mu_{\rho_{\X}} - \phi(x_{t})$ \State $t \gets t + 1$
+\EndWhile
 \EndProcedure
   \end{algorithmic}
 \end{algorithm}
 
-While this is very similar to the original herding algorithm, they also show
+While the algorithm is very similar to the original herding algorithm, they also show
 that we can view the herding algorithm as a way of sequentially minimizing the
 squared error
 \begin{equation}
-\label{eq:squared-error-herding} \norm{\mu_{\rho_{\X}} - \frac{1}{t}
-\sum_{j=1}^{t} \phi(x_{j})}_{\rkhs{H}}^{2}.
-\end{equation} If we look at the form of this, we can see that by
+  \label{eq:squared-error-herding}
+  \norm{\mu_{\rho_{\X}} - \frac{1}{t} \sum_{j=1}^{t} \phi(x_{j})}_{\rkhs{H}}^{2}.
+\end{equation}
+If we look at the form of this, we can see that by
 \ref{eq:mmd-is-norm-between-feature-maps} this is the same as
-\begin{equation} \MMD{\rho_{\X}}{\hat{\rho}_{t}}{\rkhs{H}}^{2},
-\end{equation} where \(\hat{\rho}_{t} = \frac{1}{t} \sum_{j=1}^{t}
-\delta_{x_{j}}\). Furthermore, while Monte-Carlo sampling of \(\hat{\rho}_{t}\), that
-is sampling \(\iid\) from \(\rho_{\X}\), decreases the squared MMD as
-\(O(\frac{1}{t})\), KH improves upon this with \(O(\frac{1}{t^{2}})\) which can
-be explained by the KH algorithm using \emph{negative} auto-correlations to
-explore parts of the space where samples haven't been drawn from before, linking
-it to Quasi Monte Carlo methods and Low Discrepancy Sequences
+\begin{equation}
+  \MMD{\rho_{\X}}{g_{t}}{\rkhs{H}}^{2},
+\end{equation} where \(g_{t} = \frac{1}{t} \sum_{j=1}^{t}
+\delta_{x_{j}}\). Furthermore, while Monte-Carlo sampling of \(g_{t}\),
+that is sampling \(\iid\) \(t\) times from \(\rho_{\X}\), decreases the squared MMD as
+\(O_P(\frac{1}{t})\), Kernel Herding (hereafter \textit{KH}) improves upon this
+with \(O(\frac{1}{t^{2}})\) which can be explained by the KH algorithm using
+\emph{negative} auto-correlations to explore parts of the space where samples
+haven't been drawn from before, linking it to quasi Monte-Carlo methods and low
+discrepancy sequences
 \cite{chen12_super_sampl_from_kernel_herdin,bach12_equiv_between_herdin_condit_gradien_algor}.
 They state the following which relates how herding and KH can be used in active
 learning,
 \begin{corollary}[\citep{chen12_super_sampl_from_kernel_herdin}, Corollary 6] An
-active learning algorithm selecting labels in accordance with the herding
-algorithm has guaranteed rate of convergence in terms of \(O(\frac{1}{t})\).
-Moreover, the submodular greedy algorithm of
-\cite{krause08_near_optim_sensor_placem_gauss_proces} has therefor also at least
-the same approximation rate since it is within a constant fraction \((1 -
-e^{-1})\) of optimality.
+  active learning algorithm selecting labels in accordance with the herding
+  algorithm has guaranteed rate of convergence in terms of \(O(\frac{1}{t})\).
+  Moreover, the submodular greedy algorithm of
+  \cite{krause08_near_optim_sensor_placem_gauss_proces} has therefor also at least
+  the same approximation rate since it is within a constant fraction \((1 -
+  e^{-1})\) of optimality.
 \end{corollary}
 which is in essence what we will be doing in this dissertation by building
-\(S_t\) using KH and FW, but trying to extend
-it to the generalisation error instead of considering the empirical excess risk.
+\(S_t\) in \ref{alg:active-learning} using KH and FW, but trying to extend
+it to the generalisation error instead of considering the empirical excess risk
+which is implicit in the corollary above.
 
-\subsection{Frank-Wolfe} Frank Wolfe
-\cite{frank56_algor_quadr_progr} is an algorithm for solving general constrained
-convex optimization problems of the form
+\subsection{Frank Wolfe}
+Frank Wolfe \cite{frank56_algor_quadr_progr} is an algorithm for solving general
+constrained convex optimization problems of the form
 \begin{equation}
 \label{eq:constrainted-convex-opt-problem} \min_{z \in \mathcal{C}} J(z),
 \end{equation} where \(\mathcal{C}\) is some compact convex subset of a Hilbert
 space \(\mathcal{Z}\) and \(J\) is assumed to be convex over \(\mathcal{C}\) and
 continuously differentiable. FW sets itself apart as it only requires access to
 the gradient \(\nabla J\) on \(\mathcal{C}\) and be able to find the minimiser
-of quantities of the form \(\scal{s}{\nabla J(z)}_{\mathcal{Z}}\), and does not
-require any projection steps while converging to \(J(z^{\ast}) = \min_{z
+of quantities of the form \(\scal{s}{\nabla J(z)}_{\mathcal{Z}}\),  not
+requiring any projection steps while converging to \(J(z^{\ast}) = \min_{z
 \in \mathcal{C}} J(z)\) as \(O(\frac{1}{t})\) given certain regularity
 conditions \cite{jaggi13_revis_frank_wolfe}.
 
 \begin{algorithm}
   \caption{FrankWolfe}\label{alg:frank-wolfe}
-  \begin{algorithmic}[1] \Procedure{FrankWolfe}{$\mathcal{Z}$, $\mathcal{C}$, $J$,
-$\rho_{t}$} \State $t \gets 1$ \While{$t \leq T$} \State $\tilde{g}_{t} \gets
-\argmin_{z \in \mathcal{Z}} \scal{z}{\nabla J(x_{t-1})}_{\X}$ \State $g_{t}
-\gets (1 - \rho_{t-1})g_{t-1} + \rho_{t-1}\tilde{g}_t$ \State $t \gets t + 1$
-\EndWhile \EndProcedure
+  \begin{algorithmic}[1]
+    \Procedure{FrankWolfe}{$\mathcal{Z}$, $\mathcal{C}$, $J$,
+      $\tau_{t}$, $g_0$} \State $t \gets 1$ \While{$t \leq T$} \State $\tilde{g}_{t} \gets
+    \argmin_{z \in \mathcal{C}} \scal{z}{\nabla J(g_{t-1})}_{\mathcal{Z}}$ \State $g_{t}
+    \gets (1 - \tau_{t-1})g_{t-1} + \tau_{t-1}\tilde{g}_t$ \State $t \gets t + 1$
+    \EndWhile
+    \EndProcedure
   \end{algorithmic}
 \end{algorithm}
 
 By rewriting the Kernel Herding algorithm,
 \cite{bach12_equiv_between_herdin_condit_gradien_algor} showed that KH is a
-subset of a family of Frank-Wolfe algorithms over an RKHS \(\rkhs{H}\). This is
-the setting we will work in and we describe the assumptions they use which will
-also be ours.
+subset of a family of Frank Wolfe algorithms over an RKHS \(\rkhs{H}\) equated
+with \(\mathcal{Z}\). This is the setting we will work in and we describe the
+assumptions they use which will also be ours.
 
 \begin{assumption}
 \label{as:fw-kernel-herding} We have a set \(\X\) and a mapping \(\phi: \X \to
@@ -822,25 +885,31 @@ We denote \(\mathcal{M}\) to be the marginal polytope, which is the
 \hyperref[def:conv-hull]{convex hull} of all vectors \(\phi(x)\) for \(x \in X\)
 a finite set \(X \subseteq \X\). For any \(f \in \rkhs{H}\) the following holds
 \begin{fact}
-\label{fact:optimal-element-is-extremum} The supremum of \(f(x)\) over
-\(\mathcal{C}\) is attained by an extremum,
+  \label{fact:optimal-element-is-extremum}
+  The supremum of \(f(x)\) over
+  \(\mathcal{C}\) is attained by an extremum,
 \begin{equation}
-\label{eq:optimal-element-is-extremum} \sup_{x \in \X} f(x) = \sup_{g \in
-\mathcal{M}} \scal{f}{g}_{\rkhs{H}}.
+  \label{eq:optimal-element-is-extremum}
+  \sup_{x \in X} f(x) = \sup_{g \in
+    \mathcal{M}} \scal{f}{g}_{\rkhs{H}}.
 \end{equation}
-\end{fact} the authors then show equivalence between KH and FW by considering
-the optimization problem where we equate \(\rkhs{H}\) with \(\mathcal{Z}\) and
-\(\mathcal{M}\) with \(\mathcal{C}\)
+\end{fact}
+The authors then show equivalence
+between KH and FW by considering the optimization problem where we equate
+\(\rkhs{H}\) with \(\mathcal{Z}\) and \(\mathcal{M}\) with \(\mathcal{C}\)
 \begin{equation}
 \label{eq:fw-kh-optimisation-problem} \min_{g \in \mathcal{M}} J(g) =
 \min_{g \in \mathcal{M}}\frac{1}{2}\norm{g - \mu_{\rho_{X}}}_{\rkhs{H}}^{2}
-\end{equation} where \(\mu_{\rho_X}\) is the mean embedding of \(\rho_X\)
+\end{equation}
+where \(\mu_{\rho_X}\) is the mean embedding of \(\rho_X\)
 into \(\rkhs{H}\), leading to the FW update equations
 \begin{align} \tilde{g}_{t} & = \argmin_{g \in \mathcal{M}} \scal{g_{t-1} -
-\mu_{X}}{g}_{\rkhs{H}} \label{al:fw-update-step-1}\\ g_{t} & = (1 -
-\rho_{t-1}) g_{t-1} + \rho_{t-1} \tilde{g}_{t} \label{al:fw-update-step-2}
-\end{align} and using \(\rho_{t} = \frac{1}{t+1}\) we recover the KH algorithm.
-Note that for each \(t\) in \ref{al:fw-update-step-1} the chosen
+\mu_{\rho_{X}}}{g}_{\rkhs{H}} \label{al:fw-update-step-1}\\ g_{t} & = (1 -
+\tau_{t-1}) g_{t-1} + \tau_{t-1} \tilde{g}_{t} \label{al:fw-update-step-2}
+\end{align}
+where \(\tau_t\) is the step-size \(\tau: \N \cup \{0\} \to [0, 1]\) such that
+\(\tau_t := \tau(t)\), and using \(\tau_{t} = \frac{1}{t+1}\) with \(g_0 = 0\)
+we recover the KH algorithm. Note that for each \(t\) in \ref{al:fw-update-step-1} the chosen
 \(\tilde{g}_{t}\) is assured to lie on the extremum according to
 \ref{fact:optimal-element-is-extremum}. This shows that as \(X\) is a finite
 set of \(n\) points, running FW produces a sequence \((x_{t})_{t=1}^{n}\) where
@@ -853,24 +922,25 @@ can use the FW algorithm to choose points. In the utility framework, we let
 \mu_{\rho_{\poolsetx_{0}}}}{\phi(x)}_{\rkhs{H}},
 \end{equation} and using this we can create an algorithm by letting
 \(\querstrat\) be the querying strategy that has utility function
-\ref{eq:fw-utility-function} of \ref{alg:active-learning}. We call this family
-of algorithms Frank-Wolfe Active Learning (FWAL), where we indicate the
-algorithm by specifying \(\rho_{t}\).
+\ref{eq:fw-utility-function} of \ref{alg:active-learning}. This is a family of
+active learning algorithms where each member is specified by the step-size function
+\(\tau\).
 
-\subsection{Convergence rates for Frank-Wolfe}
-\label{sec:org9640d5f} While KH had a convergence rate of \(O(\frac{1}{t})\), FW
+\subsection{Convergence Rates for Frank Wolfe}
+\label{sec:org9640d5f} While KH has a convergence rate of \(O(\frac{1}{t})\) for
+\(\MMD{\rho_{X}}{g_t}{\rkhs{H}} = \norm{g - \mu_{\rho_{X}}}_{\rkhs{H}}\), FW
 has different rates depending on the step-size chosen at each \(t\). In fact, FW
 can have much faster convergence if we use line-search as opposed to a fixed
 step-size. Let the constant
 \begin{equation}
 \label{eq:d-radius-of-biggest-interior-ball} d = \argmin_{g \in \relbound
-\mathcal{M}} \norm{g - \mu_{\rho_{\X}}}_{\rkhs{H}}
+\mathcal{M}} \norm{g - \mu_{\rho_X}}_{\rkhs{H}}
 \end{equation} where \(\relbound \mathcal{M}\) is the
 \hyperref[def:relative-boundary]{relative boundary} of \(\mathcal{M}\). Note
 that this depends on \(\mathcal{M}\) and we can have arbitrarily small \(d\).
 The following table denotes upper bounds on the rate of convergence rates of
 \(J(g_{t}) = \frac{1}{2} \norm{g_{t} - \mu_{\rho_{\X}}}^{2}_{\rkhs{H}}\)
-using FW (any), FW-kh (\(\rho_{t} =
+using FW (any), FW-kh (\(\tau_{t} =
 \frac{1}{t+1})\), FW-line search (hereafter \emph{FW-ls}), where \(g_{t}\) is
 the output from the algorithms after \(t\) steps and sufficient (but not
 necessary) conditions for this to hold is laid out in the following table
@@ -898,4 +968,3 @@ full support on \(\X\). Then \(d > 0\).
 is infinite-dimensional, that \(\X\) is a compact subspace of \(\R^D\) with a
 continuous kernel function \(K\) on \(\X \times \X\). Then \(d = 0\).
 \end{proposition}
-
